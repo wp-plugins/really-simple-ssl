@@ -4,10 +4,9 @@ Tags: ssl, https, tis, security, secure socket layers
 Requires at least: 4.0
 License: GPL2
 Tested up to: 4.1
-Stable tag: trunk
+Stable tag: 1.0.0
 
-The really simple ssl plugin forces your complete site to go over https. Sometimes, hyperlinks referring to http are saved in your posts or pages. That’s why this scripts also replaces every url that matches your site url in your site to https. 
-
+The really simple ssl plugin forces your complete site to go over https.
 == Description ==
 The really simple ssl plugin forces your complete site to go over https. Sometimes, hyperlinks referring to http are written in your posts or pages. That’s why this scripts also replaces every url that matches your site url in your site to https.
 
