@@ -4,7 +4,7 @@ Tags: ssl, https, tis, security, secure socket layers
 Requires at least: 4.0
 License: GPL2
 Tested up to: 4.2
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 
 The really simple ssl plugin forces your complete site to go over https.
 == Description ==
@@ -25,9 +25,9 @@ To install this plugin:
 
 The plugin is up and running, but you’re not quite there yet: you need to do some more stuff to go on https:
 4. If you haven’t done so already, install your ssl certificate.
-5. Go settings/general, and change your wordpress url and site url to https.
+5. Go to settings/general, and change your wordpress url and site url to https.
 
-For the Wordpress backend I would recommend to use iThemes security, and change the settings to “force ssl for dashboard”, and “”force ssl for login”.
+Now, when you go to your site, this plugin will force the website over https, and to prevent errors it will make sure every url that points to your site url is https as well. 
 
 == Frequently Asked Questions ==
 
