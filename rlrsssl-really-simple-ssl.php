@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
- * Description: Lightweight plugin to make your site ssl proof 
- * Version: 1.0.0
+ * Description: Lightweight plugin to make your site ssl proof
+ * Version: 1.0.2
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -14,7 +14,7 @@
 /*  Copyright 2014  Rogier Lankhorst  (email : rogier@rogierlankhorst.com)
 
     This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License, version 2, as 
+    it under the terms of the GNU General Public License, version 2, as
     published by the Free Software Foundation.
 
     This program is distributed in the hope that it will be useful,
@@ -51,7 +51,7 @@ class rlrsssl_really_simple_ssl {
 
     public function end_buffer_capture($buffer) {
         //get url from this domain. This domain is set to https, or we wouldnt be here
-        //we replace also major domains that work on https as well. 
+        //we replace also major domains that work on https as well.
         $ssl_array = array(
             get_option('siteurl'),
             "https://www.youtube"
@@ -78,5 +78,3 @@ class rlrsssl_really_simple_ssl {
 }
 
 $rlrsssl_really_simple_ssl = new rlrsssl_really_simple_ssl();
-
-
