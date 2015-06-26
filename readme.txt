@@ -4,12 +4,9 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.2
-Stable tag: 2.0
+Stable tag: 2.0.1
 
-No setup required! You only need an SSL certificate, and this plugin will do the rest. The really simple ssl plugin detects your ssl setup, and if ssl is detected it will configure your site to support ssl.
-
-For those situations where you know you have an active SSL certificate, but it is not detected as such, you have the option to force your site over ssl
-anyway. Be carefull to use this option: if you use it, but do not have an active ssl certificate, your site might break.
+No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
 == Description ==
 The really simple ssl plugin detects ssl by trying to open a page through https.
