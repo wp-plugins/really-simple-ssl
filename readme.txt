@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.2
-Stable tag: 2.0.6
+Stable tag: 2.0.7
 
 No setup required! You only need an SSL certificate, and this lightweight plugin will do the rest.
 
@@ -73,6 +73,9 @@ Now, when you go to your site, this plugin will force the website over https, an
 * Fixed some typos in readme
 * added screenshots
 * fixed a bug where on deactivation the https wasn't removed from siturl and homeurl
+
+= 2.0.7 = 
+* Added 301 redirect to default .htaccess redirect
 
 == Upgrade notice ==
 2.0 is a major upgrade, please backup your database and files before upgrading.
