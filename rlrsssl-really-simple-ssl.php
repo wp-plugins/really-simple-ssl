@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.0.5
+ * Version: 2.0.7
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -399,7 +399,7 @@ class rlrsssl_really_simple_ssl {
                 "# BEGIN rlrssslReallySimpleSSL"."\n".
                 "RewriteEngine on"."\n".
                 "RewriteCond %{HTTPS} !=on"."\n".
-                "RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [L]"."\n".
+                "RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]"."\n".
 					      "# END rlrssslReallySimpleSSL"."\n";
 
 				preg_match("/BEGIN rlrssslReallySimpleSSL/", $htaccess, $check);
