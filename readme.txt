@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.2.3
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -38,36 +38,39 @@ To install this plugin:
 Now, when you go to your site, this plugin will force the website over https, and to prevent errors it will make sure every url that points to your site url is https as well.
 
 == Frequently Asked Questions ==
-= Is it possible to exclude certain urls from the ssl redirect =
+= Is it possible to exclude certain urls from the ssl redirect? =
 * That is not possible. This plugin simply forces your complete site over https, which keeps it lightweight.
 
-= Is it possible to add urls that should be replaced to https =
+= Is it possible to add urls that should be replaced to https? =
 * Yes, you can use the filters 'rlrsssl_replace_url_args', and 'rlrsssl_replacewith_url_args' which should both contain the same urls, only differing in http and https.
 
 = How to uninstall when backend is not accessible =
 * Until 2.0, this could happen in case of loadbalancers. If you encounter issues, please let me know.
 
 With your ftp program, do the following 3 steps:
-1) Remove the plug-in rules from the .htaccess file
 
-2) change the siteurl back to http by adding
+1. Remove the plug-in rules from the .htaccess file
+
+2. change the siteurl back to http by adding
 define('WP_HOME','http://example.com');
 define('WP_SITEURL','http://example.com');
 
 to your wp-config.php (where example.com is your domain of course)
 
-3) rename the plug-in folder (wp-content/plugins/really-simple-ssl) to really-simple-ssl-off.
+3. rename the plug-in folder (wp-content/plugins/really-simple-ssl) to really-simple-ssl-off.
 
 = Is the plugin suitable for wordpress multisite? =
 * Several users report that this works, but I have not tested it myself. Let me know if it works for you.
 
-= Does the plugin do a seo friendly 301 redirect in the .htaccess?
+= Does the plugin do a seo friendly 301 redirect in the .htaccess? =
 * Yes, default the plugin redirects with [R=301]. You can change this in the .htaccess.
 
-= Does the plugin also redirect all subpages to https?
+= Does the plugin also redirect all subpages to https? =
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.1.1 =
+* limited the number of files, posts and options that can be show at once in the mixed content scan.
 = 2.1.0 =
 * Added detection of loadbalancer and cdn so .htaccess rules can be adapted accordingly. Fixes some redirect loop issues.
 * Added the possibility to disable the auto replace of insecure links

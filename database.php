@@ -56,8 +56,11 @@ class rlrsssl_database {
         add_filter('posts_where', array($this,'build_query'));
         $args = array('suppress_filters' => false );
         $the_query = new WP_Query($args);
+        //limit to 25
+        $count = 0;
         if ($the_query->have_posts() ) {
-          while ( $the_query->have_posts() ) {
+          while ( $the_query->have_posts() && $count<25) {
+            $count++;
             $the_query->the_post();
             $this->postsWithHTTP[get_the_title()] = get_the_ID();
           }
@@ -81,8 +84,13 @@ class rlrsssl_database {
         //ignore siteurl and home, because we take care of these
         $where.= sprintf(') AND NOT (%1$s.option_name = "siteurl" OR %1$s.option_name = "home")',$wpdb->options);
         $results = $wpdb->get_results($where);
+        //limit to 25
+        $count=0;
         foreach ($results as $result) {
+          while ($count<25) {
             array_push($this->optionsWithHTTP,$result->option_name);
+            $count++;
+          }
         }
 
       }
