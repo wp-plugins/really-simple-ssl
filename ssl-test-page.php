@@ -16,8 +16,8 @@
 		return false;
 	}
 
-	function ssl_behind_load_balancer_or_cdn() {
-		if(!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https' || !empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] == 'on') {
+	function ssl_behind_load_balancer() {
+		if(!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
 			return TRUE;
 		}
 		else {
@@ -25,11 +25,26 @@
 		}
 	}
 
-	if (is_ssl() || ssl_behind_load_balancer_or_cdn()) {
-	 	echo "#REALLY SIMPLE SSL SUCCESS#";
+	function ssl_behind_cdn() {
+		if(!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] == 'on') {
+			return TRUE;
+		}
+		else {
+			return FALSE;
+		}
+	}
+
+	if (is_ssl()) {
+	 	echo "#STANDARD-SSL#";
+	}
+	elseif (ssl_behind_load_balancer()){
+		echo "#LOADBALANCER#";
+	}
+	elseif (ssl_behind_cdn()){
+		echo "#CDN#";
 	}
 	else {
-		echo "#REALLY SIMPLE SSL DETECTION FAILED#";
+		echo "#NO SSL DETECTED#";
 	}
 ?>
 </body>
