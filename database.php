@@ -87,7 +87,7 @@ class rlrsssl_database {
         //limit to 25
         $count=0;
         foreach ($results as $result) {
-          while ($count<25) {
+          if ($count<25) {
             array_push($this->optionsWithHTTP,$result->option_name);
             $count++;
           }
