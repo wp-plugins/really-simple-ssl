@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.2.3
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -69,6 +69,8 @@ to your wp-config.php (where example.com is your domain of course)
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.2.2 =
+* Fixed bug where limit to nr of options in mixed content scan did not work correctly
 = 2.1.1 =
 * limited the number of files, posts and options that can be show at once in the mixed content scan.
 = 2.1.0 =
