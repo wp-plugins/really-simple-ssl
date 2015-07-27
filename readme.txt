@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.2.3
-Stable tag: 2.1.3
+Stable tag: 2.1.4
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -23,12 +23,7 @@ If ssl is detected it will configure your site to support ssl.
 * All hyperlinks in the front-end are changed to https, so any hardcoded http urls, in themes, or content are fixed.
 
 = Customisation options =
-You can extend the urls that are replaced with a simple filter, see also the FAQ. For example, when widgets, libraries, images etc are included from another domain, or when forms redirect to another domain. In that case you have to extend the url list with your own custom url list. 
-
-For more information: go to the [website](http://www.rogierlankhorst.com/really-simple-ssl/), or
-[contact](http://www.rogierlankhorst.com/really-simple-ssl-contact-form/) me if you have any questions or suggestions.
-
-= Remarks =
+You can extend the urls that are replaced with a simple filter, see also the FAQ. For example, when widgets, libraries, images etc are included from another domain, or when forms redirect to another domain. In that case you have to extend the url list with your own custom url list.
 
 For more information: go to the [website](http://www.rogierlankhorst.com/really-simple-ssl/), or
 [contact](http://www.rogierlankhorst.com/really-simple-ssl-contact-form/) me if you have any questions or suggestions.
@@ -53,8 +48,7 @@ For more information: go to the [website](http://www.rogierlankhorst.com/really-
 
 = Is it possible to add urls that should be replaced to https? =
 * Yes, add the following to your functions.php:
-
-function my_custom_http_urls($arr) {
+‘function my_custom_http_urls($arr) {
 	array_push($arr,
 		"http://www.facebook.com",
 		"http://www.twitter.com",
@@ -65,7 +59,7 @@ function my_custom_http_urls($arr) {
 	return $arr;
 }
 
-add_filter("rlrsssl_replace_url_args","my_custom_http_urls");
+add_filter("rlrsssl_replace_url_args","my_custom_http_urls");’
 
 Needless to say, these urls should be available over ssl, otherwise it won’t work…
 
@@ -77,8 +71,8 @@ With your ftp program, do the following 3 steps:
 1. Remove the plug-in rules from the .htaccess file
 
 2. change the siteurl back to http by adding
-define('WP_HOME','http://example.com');
-define('WP_SITEURL','http://example.com');
+‘define('WP_HOME','http://example.com');
+define('WP_SITEURL','http://example.com');’
 
 to your wp-config.php (where example.com is your domain of course)
 
@@ -94,6 +88,9 @@ to your wp-config.php (where example.com is your domain of course)
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.1.4 =
+* Improved redirect rules for .htaccess
+
 = 2.1.3 =
 * Now plugin only changes .htaccess when one of three preprogrammed ssl types was recognized.
 * Simplified filter use to add your own urls to replace, see f.a.q.
