@@ -34,6 +34,8 @@
 		}
 	}
 
+
+
 	if (is_ssl()) {
 	 	echo "#STANDARD-SSL#";
 	}
@@ -44,7 +46,7 @@
 		echo "#CDN#";
 	}
 	else {
-		echo "#NO SSL DETECTED#";
+		echo "#NO KNOWN SSL CONFIGURATION DETECTED#";
 	}
 ?>
 </body>
