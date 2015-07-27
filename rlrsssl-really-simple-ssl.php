@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.1.5
+ * Version: 2.1.6
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -379,6 +379,8 @@ class rlrsssl_really_simple_ssl {
             //check the type of ssl
             if (strpos($filecontents, "#STANDARD-SSL#") !== false) {
               $this->ssl_type = "STANDARD";
+            } elseif (strpos($filecontents, "#SERVERPORT#") !== false) {
+              $this->ssl_type = "SERVERPORT";
             } elseif (strpos($filecontents, "#LOADBALANCER#") !== false) {
               $this->ssl_type = "LOADBALANCER";
             } elseif (strpos($filecontents, "#CDN#") !== false) {
@@ -555,11 +557,13 @@ class rlrsssl_really_simple_ssl {
               $rule .="RewriteCond %{HTTP:X-Forwarded-Proto} !https"."\n";
           } elseif ($this->ssl_type == "CDN") {
               $rule .= "RewriteCond %{HTTP:X-Forwarded-SSL} !on"."\n";
+          } elseif ($this->ssl_type == "SERVERPORT") {
+            $rule .= "RewriteCond %{SERVER_PORT} !443"."\n";
           } else {
               $rule .= "RewriteCond %{HTTPS} !=on"."\n";
           }
-          //$rule .= "RewriteRule ^(.*)$ https\:\/\/{HTTP_HOST}\/$1 [R=301,L]"."\n";
-          $rule .= "RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]"."\n";
+          //$rule .= "RewriteRule ^(.*)$ https\:\/\/%{HTTP_HOST}\/$1 [R=301,L]"."\n";
+          $rule .= "RewriteRule ^(.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]"."\n";
           $rule .= "</IfModule>"."\n";
         }
 
