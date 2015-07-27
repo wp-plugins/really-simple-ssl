@@ -5,7 +5,8 @@ class rlrsssl_database {
   public
     $postsWithHTTP                 = Array(),
     $optionsWithHTTP               = Array(),
-    $search_array                  = Array();
+    $search_array                  = Array(),
+    $results_limit                 = 25;
 
   public function __construct()
   {
@@ -56,10 +57,10 @@ class rlrsssl_database {
         add_filter('posts_where', array($this,'build_query'));
         $args = array('suppress_filters' => false );
         $the_query = new WP_Query($args);
-        //limit to 25
+        //limit results
         $count = 0;
         if ($the_query->have_posts() ) {
-          while ( $the_query->have_posts() && $count<25) {
+          while ( $the_query->have_posts() && $count<$this->results_limit) {
             $count++;
             $the_query->the_post();
             $this->postsWithHTTP[get_the_title()] = get_the_ID();
@@ -87,7 +88,7 @@ class rlrsssl_database {
         //limit to 25
         $count=0;
         foreach ($results as $result) {
-          if ($count<25) {
+          if ($count<$this->results_limit ) {
             array_push($this->optionsWithHTTP,$result->option_name);
             $count++;
           }

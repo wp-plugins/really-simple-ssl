@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.1.2
+ * Version: 2.1.3
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -51,14 +51,13 @@ class rlrsssl_really_simple_ssl {
      $site_has_ssl                  = FALSE,
      $autoreplace_insecure_links    = TRUE,
      $http_urls                     = array(),
-     $https_urls                    = array(),
 
      //admin
      $ssl_fail_message_shown        = FALSE,
      $ssl_success_message_shown     = FALSE,
      $settings_changed              = FALSE,
      $wpconfig_issue                = FALSE,
-     $ssl_type                      = "STANDARD", //or "LOADBALANCER" or "CDN"
+     $ssl_type                      = "NA", //or "STANDARD", "LOADBALANCER" or "CDN"
      $capability                    = 'install_plugins',
      $plugin_url,
      $plugin_version,
@@ -68,8 +67,9 @@ class rlrsssl_really_simple_ssl {
     public function __construct()
     {
         $this->get_options();
+
         if ($this->autoreplace_insecure_links || is_admin()) {
-          $this->build_url_lists();
+          $this->build_url_list();
         }
 
         //only for backend
@@ -108,10 +108,10 @@ class rlrsssl_really_simple_ssl {
 
         //front end actions, only do something when .htaccess is inaccessible, or mixed content has been found
         if ($this->site_has_ssl) {
-            //if redirect is not set in .htaccess, add javascript redirect
-            if (!$this->ssl_redirect_set_in_htaccess) {
-              add_action('wp_print_scripts', array($this,'force_ssl_with_javascript'));
-            }
+            //Always add javascript redirect, in case the htaccess redirect fails or could not be written.
+            //if (!$this->ssl_redirect_set_in_htaccess) {
+            add_action('wp_print_scripts', array($this,'force_ssl_with_javascript'));
+            //}
 
             if ($this->autoreplace_insecure_links) {
               add_filter('template_include', array($this,'replace_insecure_links'));
@@ -129,7 +129,7 @@ class rlrsssl_really_simple_ssl {
      *
      */
 
-    public function build_url_lists() {
+    public function build_url_list() {
       $home_no_www  = str_replace ( "://www." , "://" , get_option('home'));
       $home_yes_www = str_replace ( "://" , "://www." , $home_no_www);
 
@@ -137,9 +137,8 @@ class rlrsssl_really_simple_ssl {
           str_replace ( "https://" , "http://" , $home_yes_www),
           str_replace ( "https://" , "http://" , $home_no_www),
           "http://www.youtube", //Embed Video Fix
-          "http://ajax.googleapis.com/ajax"
+          "http://ajax.googleapis.com/ajax",
       );
-      $this->https_urls = str_replace ( "http://" , "https://" , $this->http_urls);
     }
 
     /**
@@ -384,6 +383,9 @@ class rlrsssl_really_simple_ssl {
               $this->ssl_type = "LOADBALANCER";
             } elseif (strpos($filecontents, "#CDN#") !== false) {
               $this->ssl_type = "CDN";
+            } else {
+              //no recognized config, so set to NN
+              $this->ssl_type = "NA";
             }
           }
           else {
@@ -417,8 +419,8 @@ class rlrsssl_really_simple_ssl {
     /**
      * Just before the page is sent to the visitor's browser, all homeurl links are replaced with https.
      *
-     * filters: rlrsssl_replacewith_url_args, rlrsssl_replace_url_args
-     * These filters allow for extending the range of urls that are replaced with https.
+     * filters: rlrsssl_replace_url_args (rlrsssl_replacewith_url_args,  is deprecated)
+     * These filter allows for extending the range of urls that are replaced with https.
      *
      * @since  1.0
      *
@@ -428,7 +430,7 @@ class rlrsssl_really_simple_ssl {
 
     public function end_buffer_capture($buffer) {
       $search_array = apply_filters( 'rlrsssl_replace_url_args', $this->http_urls);
-      $ssl_array = apply_filters( 'rlrsssl_replacewith_url_args', $this->https_urls);
+      $ssl_array = str_replace ( "http://" , "https://" , $this->http_urls);
 
       //now replace these links
       $buffer = str_replace ($search_array , $ssl_array , $buffer);
@@ -503,9 +505,10 @@ class rlrsssl_really_simple_ssl {
         //check if htacces exists and  if htaccess is writable
         //update htaccess to redirect to ssl and set redirect_set_in_htaccess
 
-        if (!file_exists($this->ABSpath.".htaccess") || !is_writable($this->ABSpath.".htaccess")) {
-          $this->ssl_redirect_set_in_htaccess =  FALSE;
-        } else {
+        //default situation, to start with
+        $this->ssl_redirect_set_in_htaccess =  FALSE;
+
+        if (file_exists($this->ABSpath.".htaccess") && is_writable($this->ABSpath.".htaccess")) {
           //exists and is writable
           $htaccess = file_get_contents($this->ABSpath.".htaccess");
           $rules = $this->get_redirect_rules();
@@ -523,8 +526,8 @@ class rlrsssl_really_simple_ssl {
           } else {
             //current version, so do nothing.
           }
-          $this->ssl_redirect_set_in_htaccess =  TRUE;
         }
+        //if the htaccess setting was changed, we save it here.
         $this->save_options();
       }
     }
@@ -539,21 +542,27 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function get_redirect_rules() {
+        //only add the redirect rules when a known type of ssl was detected. Otherwise, we use https.
         $rule  = "# BEGIN rlrssslReallySimpleSSL rsssl_version[".$this->plugin_version."]\n";
-        $rule .= "RewriteEngine on"."\n";
+        if ($this->ssl_type != "NA") {
+          //set redirect_set_in_htaccess to true, because we are now making a redirect rule.
+          $this->ssl_redirect_set_in_htaccess = TRUE;
+          $rule .= "<IfModule mod_rewrite.c>"."\n";
+          $rule .= "RewriteEngine on"."\n";
 
-        //select rewrite rule based on detected type of ssl
-        if ($this->ssl_type == "LOADBALANCER") {
-            $rule .="RewriteCond %{HTTP:X-Forwarded-Proto} !https"."\n";
-        } elseif ($this->ssl_type == "CDN") {
-            $rule .= "RewriteCond %{HTTP:X-Forwarded-SSL} !on"."\n";
-        } else {
-            $rule .= "RewriteCond %{HTTPS} !=on"."\n";
+          //select rewrite conditino based on detected type of ssl
+          if ($this->ssl_type == "LOADBALANCER") {
+              $rule .="RewriteCond %{HTTP:X-Forwarded-Proto} !https"."\n";
+          } elseif ($this->ssl_type == "CDN") {
+              $rule .= "RewriteCond %{HTTP:X-Forwarded-SSL} !on"."\n";
+          } else {
+              $rule .= "RewriteCond %{HTTPS} !=on"."\n";
+          }
+          $rule .= "RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]"."\n";
+          $rule .= "</IfModule>"."\n";
         }
 
-        $rule .= "RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]"."\n";
-
-        //owasp security best practive https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
+        //owasp security best practice https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
         $rule .= "<IfModule mod_headers.c>"."\n";
         $rule .= "Header always set Strict-Transport-Security 'max-age=31536000' env=HTTPS"."\n";
         $rule .= "</IfModule>"."\n";
@@ -771,7 +780,6 @@ class rlrsssl_really_simple_ssl {
         //$database->fix_insecure_post_links();
       }
       $this->save_options();
-
   	}
 
 
@@ -860,7 +868,7 @@ class rlrsssl_really_simple_ssl {
                       }
                       else {
                         //ssl detected, no problems!
-                        _e("An SSL certificate appears to be active on your site. ","rlrsssl-really-simple-ssl");
+                        _e("An SSL certificate was detected on your site. ","rlrsssl-really-simple-ssl");
                       }
                   ?>
                 </td>
@@ -871,7 +879,7 @@ class rlrsssl_really_simple_ssl {
                 <?php echo $this->ssl_redirect_set_in_htaccess ? $this->img("success") :$this->img("warning");?>
               </td>
               <td>
-                <?php echo $this->ssl_redirect_set_in_htaccess ? __("https redirect set in .htaccess","rlrsssl-really-simple-ssl") :__("Https redirect was set in javascript, because .htaccess was not available or writable.","rlrsssl-really-simple-ssl");?>
+                <?php echo $this->ssl_redirect_set_in_htaccess ? __("https redirect set in .htaccess","rlrsssl-really-simple-ssl") :__("Https redirect was set in javascript, because .htaccess was not available or writable, or the ssl configuration was not recognized.","rlrsssl-really-simple-ssl");?>
               </td>
             </tr>
             <?php }

@@ -62,10 +62,10 @@ public function scan_callback() {
               } elseif(!$this->autoreplace_insecure_links) {
                   $autoreplace = __("currently NOT active","rlrsssl-really-simple-ssl");
               }
-              echo sprintf(__('Auto replace script might be necessary for your website (%s), because mixed content was detected in the following posts, files and options.','rlrsssl-really-simple-ssl'),$autoreplace);
+              echo sprintf(__('Auto replace script is necessary for your website (%s), because mixed content was detected in the following posts, files and options (for performance reasons the number of results is limited to 25 per type).','rlrsssl-really-simple-ssl'),$autoreplace);
 
           } else {
-            _e("No mixed content was detected. You could try to run your site without using the auto replace of insecure links. ","rlrsssl-really-simple-ssl");
+            _e("No mixed content was detected. You could try to run your site without using the auto replace of insecure links, but check carefully. ","rlrsssl-really-simple-ssl");
           }
           ?>
       </td>
