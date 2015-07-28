@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.1.6
+ * Version: 2.1.7
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -57,7 +57,12 @@ class rlrsssl_really_simple_ssl {
      $ssl_success_message_shown     = FALSE,
      $settings_changed              = FALSE,
      $wpconfig_issue                = FALSE,
-     $ssl_type                      = "NA", //or "STANDARD", "LOADBALANCER" or "CDN"
+     $ssl_type                      = "NA",
+                                    //"SERVER-HTTPS-ON"
+                                    //"SERVER-HTTPS-1"
+                                    //"SERVERPORT443"
+                                    //"LOADBALANCER"
+                                    //"CDN"
      $capability                    = 'install_plugins',
      $plugin_url,
      $plugin_version,
@@ -90,8 +95,7 @@ class rlrsssl_really_simple_ssl {
             add_action('plugins_loaded',array($this,'editHtaccess'));
             add_action('plugins_loaded',array($this,'set_siteurl_to_ssl'));
           }
-          elseif ($this->ssl_redirect_set_in_htaccess) {
-            //check if the .htaccess was edited, if so, remove edit and set db value for htaccess edit to false
+          else {
             add_action('plugins_loaded',array($this,'removeHtaccessEdit'));
             add_action('plugins_loaded',array($this,'remove_ssl_from_siteurl'));
           }
@@ -377,16 +381,18 @@ class rlrsssl_really_simple_ssl {
           if ($this->error_number==0) {
             $this->site_has_ssl = TRUE;
             //check the type of ssl
-            if (strpos($filecontents, "#STANDARD-SSL#") !== false) {
-              $this->ssl_type = "STANDARD";
-            } elseif (strpos($filecontents, "#SERVERPORT#") !== false) {
-              $this->ssl_type = "SERVERPORT";
+            if (strpos($filecontents, "#SERVER-HTTPS-ON#") !== false) {
+              $this->ssl_type = "SERVER-HTTPS-ON";
+            } elseif (strpos($filecontents, "#SERVER-HTTPS-1#") !== false) {
+              $this->ssl_type = "SERVER-HTTPS-1";
+            } elseif (strpos($filecontents, "#SERVERPORT443#") !== false) {
+              $this->ssl_type = "SERVERPORT443";
             } elseif (strpos($filecontents, "#LOADBALANCER#") !== false) {
               $this->ssl_type = "LOADBALANCER";
             } elseif (strpos($filecontents, "#CDN#") !== false) {
               $this->ssl_type = "CDN";
             } else {
-              //no recognized config, so set to NN
+              //no recognized response, so set to NA
               $this->ssl_type = "NA";
             }
           }
@@ -507,13 +513,11 @@ class rlrsssl_really_simple_ssl {
         //check if htacces exists and  if htaccess is writable
         //update htaccess to redirect to ssl and set redirect_set_in_htaccess
 
-        //default situation, to start with
-        $this->ssl_redirect_set_in_htaccess =  FALSE;
-
         if (file_exists($this->ABSpath.".htaccess") && is_writable($this->ABSpath.".htaccess")) {
           //exists and is writable
           $htaccess = file_get_contents($this->ABSpath.".htaccess");
           $rules = $this->get_redirect_rules();
+          $this->ssl_redirect_set_in_htaccess = !($this->ssl_type=="NA");
 
           if(!$this->contains_rsssl_rules($htaccess)){
             //really simple ssl rules not in the file, so add.
@@ -528,6 +532,8 @@ class rlrsssl_really_simple_ssl {
           } else {
             //current version, so do nothing.
           }
+        } else {
+          $this->ssl_redirect_set_in_htaccess =  FALSE;
         }
         //if the htaccess setting was changed, we save it here.
         $this->save_options();
@@ -553,14 +559,16 @@ class rlrsssl_really_simple_ssl {
           $rule .= "RewriteEngine on"."\n";
 
           //select rewrite conditino based on detected type of ssl
-          if ($this->ssl_type == "LOADBALANCER") {
+          if ($this->ssl_type == "SERVER-HTTPS-ON") {
+              $rule .= "RewriteCond %{HTTPS} !=on [NC]"."\n";
+          } elseif ($this->ssl_type == "SERVER-HTTPS-1") {
+              $rule .= "RewriteCond %{HTTPS} !=1"."\n";
+          } elseif ($this->ssl_type == "SERVERPORT443") {
+             $rule .= "RewriteCond %{SERVER_PORT} !443"."\n";
+          } elseif ($this->ssl_type == "LOADBALANCER") {
               $rule .="RewriteCond %{HTTP:X-Forwarded-Proto} !https"."\n";
           } elseif ($this->ssl_type == "CDN") {
               $rule .= "RewriteCond %{HTTP:X-Forwarded-SSL} !on"."\n";
-          } elseif ($this->ssl_type == "SERVERPORT") {
-            $rule .= "RewriteCond %{SERVER_PORT} !443"."\n";
-          } else {
-              $rule .= "RewriteCond %{HTTPS} !=on"."\n";
           }
           //$rule .= "RewriteRule ^(.*)$ https\:\/\/%{HTTP_HOST}\/$1 [R=301,L]"."\n";
           $rule .= "RewriteRule ^(.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]"."\n";
