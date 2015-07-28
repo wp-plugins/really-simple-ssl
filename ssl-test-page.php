@@ -4,16 +4,23 @@
 <h1>SSL test page</h1>
 <p>This page is used purely to test for ssl availability.</p>
 <?php
-	function is_ssl() {
+	function server_https_ssl() {
 		if ( isset($_SERVER['HTTPS']) ) {
 			if ( 'on' == strtolower($_SERVER['HTTPS']) )
 				return true;
 			if ( '1' == $_SERVER['HTTPS'] )
 				return true;
-		} elseif ( isset($_SERVER['SERVER_PORT']) && ( '443' == $_SERVER['SERVER_PORT'] ) ) {
-			return true;
 		}
 		return false;
+	}
+
+	function server_port_ssl() {
+		if ( isset($_SERVER['SERVER_PORT']) && ( '443' == $_SERVER['SERVER_PORT'] ) ) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
 	function ssl_behind_load_balancer() {
@@ -34,7 +41,8 @@
 		}
 	}
 
-	if (is_ssl()) {
+
+	if (server_https_ssl()) {
 	 	echo "#STANDARD-SSL#";
 	}
 	elseif (ssl_behind_load_balancer()){
@@ -43,8 +51,11 @@
 	elseif (ssl_behind_cdn()){
 		echo "#CDN#";
 	}
+	elseif (server_port_ssl()) {
+		echo "#SERVERPORT#";
+	}
 	else {
-		echo "#NO SSL DETECTED#";
+		echo "#NO KNOWN SSL CONFIGURATION DETECTED#";
 	}
 ?>
 </body>
