@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.2.3
-Stable tag: 2.1.8
+Stable tag: 2.1.9
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -23,7 +23,25 @@ If ssl is detected it will configure your site to support ssl.
 * All hyperlinks in the front-end are changed to https, so any hardcoded http urls, in themes, or content are fixed.
 
 = Customization options =
-You can extend the urls that are replaced with a simple filter, see also the FAQ. For example, when widgets, libraries, images etc are included from another domain, or when forms redirect to another domain. In that case you have to extend the url list with your own custom url list.
+* You can extend the urls that are replaced with a simple filter. For example, when widgets, libraries, images etc are included from another domain, or when forms redirect to another domain. In that case you have to extend the url list with your own custom url list.
+Add the following to your functions.php:
+
+function my_custom_http_urls($arr) {
+
+	array_push($arr, "http://www.facebook.com", "http://twitter.com");
+
+	return $arr;
+
+}
+
+add_filter("rlrsssl_replace_url_args","my_custom_http_urls");
+
+* You can stop the ssl plugin from editing the htaccess file by adding the following to your wp-config.php
+
+define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , TRUE );
+
+= Feedback is welcome! =
+If you have any problems, I am happy to help, but I can only help with sufficient information, like: how does your .htaccess look, and on what domain is your website located.
 
 For more information: go to the [website](http://www.rogierlankhorst.com/really-simple-ssl/), or
 [contact](http://www.rogierlankhorst.com/really-simple-ssl-contact-form/) me if you have any questions or suggestions.
@@ -45,6 +63,15 @@ For more information: go to the [website](http://www.rogierlankhorst.com/really-
 == Frequently Asked Questions ==
 = Is it possible to exclude certain urls from the ssl redirect? =
 * That is not possible. This plugin simply forces your complete site over https, which keeps it lightweight.
+
+= The htaccess edit results in a redirect loop. How can I fix this =
+* Although I try to make the htaccess rewrite rules as generic as possible, and check for conflicts I am aware of, this is still possible.
+To help us improve the plugin, please send your url and htaccess contents to [me](http://www.rogierlankhorst.com/really-simple-ssl-contact-form/).
+To fix this straight away you can prevent the htaccess from being edited.
+1. Remove the really simple ssl rewrite rules from your htaccess.
+2. Add the following to your wp-config.php
+
+define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , TRUE );
 
 = Is it possible to add urls that should be replaced to https? =
 * Yes, add the following to your functions.php:
@@ -88,6 +115,8 @@ to your wp-config.php (where example.com is your domain of course)
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.1.9 =
+* Added the possibility to prevent htaccess from being edited, in case of redirect loop.
 = 2.1.7 =
 * Refined SSL detection
 * Bugfix on deactivation of plugin
