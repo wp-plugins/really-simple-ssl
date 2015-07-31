@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.2.3
-Stable tag: 2.1.10
+Stable tag: 2.1.11
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -97,11 +97,10 @@ With your ftp program, do the following 3 steps:
 
 2. change the siteurl back to http by adding
 
-define('WP_HOME','http://example.com');
+update_option('siteurl','http://example.com');
+update_option('home','http://example.com');
 
-define('WP_SITEURL','http://example.com');
-
-to your wp-config.php (where example.com is your domain of course)
+to your functions.php (where example.com is your domain of course)
 
 3. rename the plug-in folder (wp-content/plugins/really-simple-ssl) to really-simple-ssl-off.
 
@@ -115,6 +114,9 @@ to your wp-config.php (where example.com is your domain of course)
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.1.11 =
+* Improved instructions regarding deinstalling when locked out of back-end
+
 = 2.1.10 =
 * Removed HSTS headers, because it is difficult to roll back.
 
