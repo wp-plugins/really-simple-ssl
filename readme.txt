@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.2.3
-Stable tag: 2.1.9
+Stable tag: 2.1.10
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -115,6 +115,9 @@ to your wp-config.php (where example.com is your domain of course)
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.1.10 =
+* Removed HSTS headers, because it is difficult to roll back.
+
 = 2.1.9 =
 * Added the possibility to prevent htaccess from being edited, in case of redirect loop.
 = 2.1.7 =

@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.1.9
+ * Version: 2.1.10
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -581,9 +581,9 @@ class rlrsssl_really_simple_ssl {
         }
 
         //owasp security best practice https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
-        $rule .= "<IfModule mod_headers.c>"."\n";
-        $rule .= "Header always set Strict-Transport-Security 'max-age=31536000' env=HTTPS"."\n";
-        $rule .= "</IfModule>"."\n";
+        #$rule .= "<IfModule mod_headers.c>"."\n";
+        #$rule .= "Header always set Strict-Transport-Security 'max-age=31536000' env=HTTPS"."\n";
+        #$rule .= "</IfModule>"."\n";
 	      $rule .= "# END rlrssslReallySimpleSSL"."\n";
 
         $rule = preg_replace("/\n+/","\n", $rule);
