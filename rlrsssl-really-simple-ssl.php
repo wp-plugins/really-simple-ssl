@@ -87,7 +87,6 @@ class rlrsssl_really_simple_ssl {
           add_action('plugins_loaded',array($this,'check_for_ssl'));
 
           //if ssl, edit htaccess to redirect to https if possible, and change the siteurl
-          //add_action('plugins_loaded',array($this,'configure_ssl'));
           if ($this->site_has_ssl) {
             //check for siteurl definitions in wpconfig
             add_action('plugins_loaded',array($this,'check_for_siteurl_in_wpconfig'));
