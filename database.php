@@ -96,4 +96,3 @@ class rlrsssl_database {
 
       }
 }
- ?>

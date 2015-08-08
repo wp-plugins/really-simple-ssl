@@ -1,11 +1,11 @@
 === Really Simple SSL ===
 Contributors:RogierLankhorst
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ZEQHXWTSQVAZJ&lc=NL&item_name=rogierlankhorst%2ecom&item_number=really%2dsimple%2dssl%2dplugin&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted
-Tags: secure website, website security, ssl, https, tls, security, secure socket layers
+Tags: secure website, website security, ssl, https, tls, security, secure socket layers, hsts
 Requires at least: 4.2
 License: GPL2
-Tested up to: 4.2.3
-Stable tag: 2.1.11
+Tested up to: 4.3
+Stable tag: 2.1.12
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -114,6 +114,11 @@ to your functions.php (where example.com is your domain of course)
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.1.12 =
+* Fixed bug where execution order could be compromised, resulting in NO SSL messages.
+* Added a test to check if the proposed .htaccess rules will work in the current environment.
+* Readded HSTS to the htaccess rules, but now as an option. Adding this should be done only when you are sure you do not want to revert back to http.
+
 = 2.1.11 =
 * Improved instructions regarding deinstalling when locked out of back-end
 
@@ -148,7 +153,7 @@ to your functions.php (where example.com is your domain of course)
 * Added a scan to scan the website for insecure links
 * Added detection of in wp-config.php defined siteurl and homeurl, which could prevent from successfull url change.
 * Dropped the force ssl option (used when not ssl detected)
-* Added owasp security best practive https://www.owasp.org/index.php/HTTP_Strict_Transport_Security in .htaccess
+* Thanks to Peter Tak, [PTA security](http://www.pta-security.nl/) for mentioning the owasp security best practice https://www.owasp.org/index.php/HTTP_Strict_Transport_Security in .htaccess,
 
 = 2.0.7 =
 * Added 301 redirect to .htaccess for seo purposes
