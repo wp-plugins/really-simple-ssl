@@ -43,14 +43,19 @@ if ( ! class_exists( 'rlrsssl_really_simple_ssl' ) ) {
 class rlrsssl_really_simple_ssl {
     public
      //front end
+     $force_ssl_without_detection   = FALSE,
      $site_has_ssl                  = FALSE,
      $autoreplace_insecure_links    = TRUE,
      $http_urls                     = array(),
 
      //admin
-     $ssl_redirect_set_in_htaccess  = FALSE, //moved to backend because we don't check it anymore for the javascript redirect.
+     //options saved in db
      $ssl_fail_message_shown        = FALSE,
      $ssl_success_message_shown     = FALSE,
+     $plugin_db_version,
+     $hsts                          = FALSE,
+
+     $ssl_redirect_set_in_htaccess  = FALSE, //moved to backend because we don't check it anymore for the javascript redirect.
      $settings_changed              = FALSE,
      $wpconfig_issue                = FALSE,
      $ssl_type                      = "NA",
@@ -62,10 +67,8 @@ class rlrsssl_really_simple_ssl {
      $capability                    = 'manage_options',
      $plugin_url,
      $plugin_version,
-     $plugin_db_version,
      $error_number                  = 0,
      $htaccess_test_success         = FALSE,
-     $hsts                          = FALSE,
      $ABSpath;
 
     public function __construct()
@@ -109,7 +112,7 @@ class rlrsssl_really_simple_ssl {
     }
 
     public function make_frontend_ssl() {
-      if ($this->site_has_ssl) {
+      if ($this->site_has_ssl || $this->force_ssl_without_detection) {
           //Always add javascript redirect, in case the htaccess redirect fails or could not be written.
           //if (!$this->ssl_redirect_set_in_htaccess) {
           add_action('wp_print_scripts', array($this,'force_ssl_with_javascript'));
@@ -133,7 +136,7 @@ class rlrsssl_really_simple_ssl {
     public function start_scan(){
       //set up scanning
       //No need for scanning if no ssl certificate was detected
-      if ($this->site_has_ssl) {
+      if ($this->site_has_ssl || $this->force_ssl_without_detection) {
         $this->scan = new rlrsssl_scan;
         $this->scan->init($this->http_urls, $this->autoreplace_insecure_links);
         $this->scan->set_images(
@@ -166,16 +169,28 @@ class rlrsssl_really_simple_ssl {
       );
     }
 
+    /**
+     * Checks for SSL and configures the site accordingly
+     * functions: check_for_ssl, test_htaccess_redirect, check_for_siteurl_in_wpconfig, editHtaccess, set_siteurl_to_ssl, flush
+     * params: backend: capability, ssl_type,
+     * params, frontend: site_has_ssl, force_ssl_without_detection
+     * @since  2.1
+     *
+     * @access public
+     *
+     */
+
     public function init_ssl() {
       if (current_user_can($this->capability)) {
         $this->check_for_ssl();
 
         //if ssl, edit htaccess to redirect to https if possible, and change the siteurl
-        if ($this->site_has_ssl) {
+        if ($this->site_has_ssl || $this->force_ssl_without_detection) {
           //only check the htaccess if we found a known ssl type.
           if ($this->ssl_type != "NA") {
               $this->test_htaccess_redirect();
           }
+
           //check for siteurl definitions in wpconfig
           $this->check_for_siteurl_in_wpconfig();
           //wpconfig issue does not pose serious problems on the front end, so we continue anyway, but notify of this issue when it arises
@@ -344,6 +359,7 @@ class rlrsssl_really_simple_ssl {
       $options = get_option('rlrsssl_options');
 
       if (isset($options)) {
+        $this->force_ssl_without_detection = isset($options['force_ssl_without_detection']) ? $options['force_ssl_without_detection'] : FALSE;
         $this->site_has_ssl = isset($options['site_has_ssl']) ? $options['site_has_ssl'] : FALSE;
         $this->hsts = isset($options['hsts']) ? $options['hsts'] : FALSE;
         $this->ssl_fail_message_shown = isset($options['ssl_fail_message_shown']) ? $options['ssl_fail_message_shown'] : FALSE;
@@ -368,6 +384,7 @@ class rlrsssl_really_simple_ssl {
 
     public function save_options() {
       $options = array(
+        'force_ssl_without_detection'   => $this->force_ssl_without_detection,
         'site_has_ssl'                  => $this->site_has_ssl,
         'hsts'                          => $this->hsts,
         'ssl_fail_message_shown'        => $this->ssl_fail_message_shown,
@@ -407,6 +424,7 @@ class rlrsssl_really_simple_ssl {
       $this->removeHtaccessEdit();
       $this->remove_ssl_from_siteurl();
       $this->remove_ssl_from_siteurl_in_wpconfig();
+      $this->force_ssl_without_detection  = FALSE;
       $this->site_has_ssl                 = FALSE;
       $this->hsts                         = FALSE;
       $this->ssl_fail_message_shown       = FALSE;
@@ -439,6 +457,7 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function check_for_ssl() {
+      if (!current_user_can($this->capability)) {exit();}
       $site_has_ssl = $this->site_has_ssl;
       $testpage_url = trailingslashit(str_replace ("http://" , "https://" , $this->plugin_url))."ssl-test-page.php";
       //do the error handling myself, because non functioning ssl will result in a warning
@@ -488,6 +507,7 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function test_htaccess_redirect() {
+      if (!current_user_can($this->capability)) {exit();}
       $test_dir = trailingslashit(plugin_dir_path( __FILE__ ))."testssl/";
       $htaccess_file = $test_dir.".htaccess";
       $webpage_file = $test_dir."ssl-test-page.html";
@@ -633,6 +653,7 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function editHtaccess(){
+        if (!current_user_can($this->capability)) {exit();}
         //check if htacces exists and  if htaccess is writable
         //update htaccess to redirect to ssl and set redirect_set_in_htaccess
 
@@ -804,7 +825,8 @@ class rlrsssl_really_simple_ssl {
 
   public function show_notices()
   {
-    if (!$this->site_has_ssl && !$this->ssl_fail_message_shown) {
+    if (!($this->site_has_ssl || $this->force_ssl_without_detection)  && !$this->ssl_fail_message_shown) {
+      parse_str($_SERVER['QUERY_STRING'], $params);
       add_action('admin_print_footer_scripts', array($this, 'insert_dismiss_fail'));
         ?>
 
@@ -812,6 +834,8 @@ class rlrsssl_really_simple_ssl {
         <?php _e("No SSL was detected. If you are just waiting for your ssl certificate to kick in you can dismiss this warning.","rlrsssl-really-simple-ssl");?>
         </p>
         <p><strong>
+        <?php printf('<a href="%1$s">'.__("I'm sure I have an active SSL certificate, force it!","rlrsssl-really-simple-ssl").'</a>', '?'.http_build_query(array_merge($params, array('rlrsssl_force_ssl'=>'1'))));?>
+        |
         <a href="options-general.php?page=rlrsssl_really_simple_ssl"><?php echo __("View your detected setup","rlrsssl-really-simple-ssl");?></a>
         </strong></p></div>
         <?php
@@ -828,7 +852,7 @@ class rlrsssl_really_simple_ssl {
 
     }
 
-    if ($this->site_has_ssl && $this->wpconfig_issue) {
+    if (($this->site_has_ssl || $this->force_ssl_without_detection) && $this->wpconfig_issue) {
       ?>
       <div id="message" class="error fade notice"><p>
       <?php echo __("We detected a definition of siteurl or homeurl in your wp-config.php, but the file is not writable. Because of this, we cannot set the siteurl to https.","rlrsssl-really-simple-ssl");?>
@@ -922,8 +946,11 @@ class rlrsssl_really_simple_ssl {
 
   public function process_submit_without_form() {
       if ( isset($_GET['rlrsssl_fixposts']) && '1' == $_GET['rlrsssl_fixposts'] ) {
-
         //$database->fix_insecure_post_links();
+      }
+
+      if ( isset($_GET['rlrsssl_force_ssl']) && '1' == $_GET['rlrsssl_force_ssl'] ) {
+        $this->force_ssl_without_detection = TRUE;
       }
       $this->save_options();
   	}
@@ -985,6 +1012,12 @@ class rlrsssl_really_simple_ssl {
           'title'	=> __("How to get an SSL certificate","rlrsssl-really-simple-ssl"),
           'content'	=> '<p>' . __("To secure your site with ssl, you need an SSL certificate. How you can get a certificate depends on your hosting provider, but can often be requested on the control panel of your website. If you are not sure what to do, you can contact your hosting provider.","rlrsssl-really-simple-ssl") . '</p>',
       ) );
+
+      $screen->add_help_tab( array(
+          'id'	=> "force_ssl_without_detection",
+          'title'	=> __("Force SSL without detection","rlrsssl-really-simple-ssl"),
+          'content'	=> '<p>' . __("This plugin tries to open a page within the plugin directory over https. If that fails, it is assumed that ssl is not availble. But as this may not cover all eventualities, it is possible to force the site over ssl anyway.<br><br> If you force your site over ssl without a valid ssl certificate, your site may break. In that case, remove the 'really simple ssl' rules from your .htaccess file (if present), and remove or rename the really simple ssl plugin.","rlrsssl-really-simple-ssl") . '</p>',
+      ) );
   }
 
 
@@ -1021,7 +1054,10 @@ class rlrsssl_really_simple_ssl {
               <td><?php echo $this->site_has_ssl ? $this->img("success") : $this->img("error");?></td>
               <td><?php
                       if (!$this->site_has_ssl) {
-                        echo __("No SSL detected.","rlrsssl-really-simple-ssl")."&nbsp;";
+                        if (!$this->force_ssl_without_detection)
+                          echo __("No SSL detected.","rlrsssl-really-simple-ssl")."&nbsp;";
+                        else
+                          echo __("No SSL detected, but SSL is forced.","rlrsssl-really-simple-ssl")."&nbsp;";
                       }
                       else {
                         //ssl detected, no problems!
@@ -1030,7 +1066,7 @@ class rlrsssl_really_simple_ssl {
                   ?>
                 </td>
             </tr>
-            <?php if($this->site_has_ssl) { ?>
+            <?php if($this->site_has_ssl || $this->force_ssl_without_detection) { ?>
             <tr>
               <td>
                 <?php echo $this->ssl_redirect_set_in_htaccess ? $this->img("success") :$this->img("warning");?>
@@ -1065,9 +1101,7 @@ class rlrsssl_really_simple_ssl {
             ?>
 
           </table>
-        <?php
-        if ($this->site_has_ssl) {
-        ?>
+
           <form action="options.php" method="post">
           <?php
               settings_fields('rlrsssl_options');
@@ -1076,9 +1110,7 @@ class rlrsssl_really_simple_ssl {
 
           <input class="button button-primary" name="Submit" type="submit" value="<?php echo __("Save","rlrsssl-really-simple-ssl"); ?>" />
           </form>
-          <?php
-        }
-          ?>
+
       </div>
   <?php
   }
@@ -1162,10 +1194,18 @@ class rlrsssl_really_simple_ssl {
         //only show option to enable or disable autoreplace when ssl is detected
         register_setting( 'rlrsssl_options', 'rlrsssl_options', array($this,'options_validate') );
         add_settings_section('rlrsssl_settings', __("Settings","rlrsssl-really-simple-ssl"), array($this,'section_text'), 'rlrsssl');
-        add_settings_field('id_autoreplace_insecure_links', __("Auto replace insecure links","rlrsssl-really-simple-ssl"), array($this,'get_option_autoreplace_insecure_links'), 'rlrsssl', 'rlrsssl_settings');
+
+        if($this->site_has_ssl || $this->force_ssl_without_detection) {
+          add_settings_field('id_autoreplace_insecure_links', __("Auto replace insecure links","rlrsssl-really-simple-ssl"), array($this,'get_option_autoreplace_insecure_links'), 'rlrsssl', 'rlrsssl_settings');
+        }
 
         if($this->site_has_ssl && file_exists($this->ABSpath.".htaccess") && is_writable($this->ABSpath.".htaccess")) {
           add_settings_field('id_hsts', __("Turn HTTP Strict Transport Security on","rlrsssl-really-simple-ssl"), array($this,'get_option_hsts'), 'rlrsssl', 'rlrsssl_settings');
+        }
+
+        if(!$this->site_has_ssl) {
+          //no sense in showing force or ignore warning options when ssl is detected: everything should work fine
+          add_settings_field('id_force_ssl_without_detection', __("Force SSL without detection","rlrsssl-really-simple-ssl"), array($this,'get_option_force_ssl_withouth_detection'), 'rlrsssl', 'rlrsssl_settings');
         }
       }
 
@@ -1203,14 +1243,20 @@ class rlrsssl_really_simple_ssl {
     $newinput['site_has_ssl']                 = $this->site_has_ssl;
     $newinput['ssl_success_message_shown']    = $this->ssl_success_message_shown;
     $newinput['ssl_fail_message_shown']       = $this->ssl_fail_message_shown;
-    $newinput['hsts']                         = $this->hsts;
     $newinput['plugin_db_version']            = $this->plugin_db_version;
-    $newinput['autoreplace_insecure_links']   = $this->autoreplace_insecure_links;
+    //$newinput['hsts']                         = $this->hsts;
+    //$newinput['autoreplace_insecure_links']   = $this->autoreplace_insecure_links;
 
     if (!empty($input['hsts']) && $input['hsts']=='1') {
       $newinput['hsts'] = TRUE;
     } else {
       $newinput['hsts'] = FALSE;
+    }
+
+    if (!empty($input['force_ssl_without_detection']) && $input['force_ssl_without_detection']=='1') {
+      $newinput['force_ssl_without_detection'] = TRUE;
+    } else {
+      $newinput['force_ssl_without_detection'] = FALSE;
     }
 
     if (!empty($input['autoreplace_insecure_links']) && $input['autoreplace_insecure_links']=='1') {
@@ -1238,6 +1284,20 @@ class rlrsssl_really_simple_ssl {
     $options = get_option('rlrsssl_options');
     echo '<input id="rlrsssl_options"  onClick="return confirm(\''.__("Are you sure? Your visitors will keep going to a https site for a year after you turn this off.","rlrsssl-really-simple-ssl").'\');" name="rlrsssl_options[hsts]" size="40" type="checkbox" value="1"' . checked( 1, $this->hsts, false ) ." />";
   }
+
+  /**
+   * Insert option into settings form
+   *
+   * @since  2.0
+   *
+   * @access public
+   *
+   */
+
+public function get_option_force_ssl_withouth_detection() {
+  $options = get_option('rlrsssl_options');
+  echo '<input id="rlrsssl_options" onClick="return confirm(\''.__("Are you sure you have an SSL certifcate? Forcing ssl on a non-ssl site can break your site.","rlrsssl-really-simple-ssl").'\');" name="rlrsssl_options[force_ssl_without_detection]" size="40" type="checkbox" value="1"' . checked( 1, $this->force_ssl_without_detection, false ) ." />";
+}
 
   /**
    * Insert option into settings form

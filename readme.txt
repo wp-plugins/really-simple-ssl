@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.3
-Stable tag: 2.1.11
+Stable tag: 2.1.12
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -74,7 +74,8 @@ To fix this straight away you can prevent the htaccess from being edited.
 define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , TRUE );
 
 = Is it possible to add urls that should be replaced to https? =
-* Yes, add the following to your functions.php:
+* Yes, although it is of course better if you just edit the insecure links directly.
+If that is not possible, or is very time consuming, add the following to your functions.php:
 
 function my_custom_http_urls($arr) {
 
@@ -105,7 +106,8 @@ to your functions.php (where example.com is your domain of course)
 3. rename the plug-in folder (wp-content/plugins/really-simple-ssl) to really-simple-ssl-off.
 
 = Is the plugin suitable for wordpress multisite? =
-* Several users report that this works, but I have not tested it myself. Let me know if it works for you.
+* Yes, it works on multisite, both with domain mapping and with subdomains. The plugin should be activated for all sites though. If you want
+to activate per site, you have to prevent the plugin from editing the .htaccess. Editing the .htaccess on a per site basis is on my to do list.
 
 = Does the plugin do a seo friendly 301 redirect in the .htaccess? =
 * Yes, default the plugin redirects with [R=301]. You can change this in the .htaccess.
@@ -115,7 +117,7 @@ to your functions.php (where example.com is your domain of course)
 
 == Changelog ==
 = 2.1.12 =
-* Fixed bug where execution order could be compromised, resulting in NO SSL messages.
+* Added the force SSL option, in cases where SSL could not be detected for some reason.
 * Added a test to check if the proposed .htaccess rules will work in the current environment.
 * Readded HSTS to the htaccess rules, but now as an option. Adding this should be done only when you are sure you do not want to revert back to http.
 
