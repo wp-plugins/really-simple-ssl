@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.3
-Stable tag: 2.1.12
+Stable tag: 2.1.13
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -116,6 +116,8 @@ to activate per site, you have to prevent the plugin from editing the .htaccess.
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.1.13 =
+* Fixed an issue where in some configurations the replace url filter did not fire
 = 2.1.12 =
 * Added the force SSL option, in cases where SSL could not be detected for some reason.
 * Added a test to check if the proposed .htaccess rules will work in the current environment.
@@ -180,8 +182,7 @@ to activate per site, you have to prevent the plugin from editing the .htaccess.
 * Improved installation instructions
 
 == Upgrade notice ==
-2.1 is a major upgrade, please backup your database and files before upgrading.
-It is not necessary to do any setup anymore, the plugin will handle it all. Just install it :)
+Major upgrade, please backup your database and files before upgrading.
 
 == Screenshots ==
 1. On the settings page, you can view your configuration, and sources of mixed content

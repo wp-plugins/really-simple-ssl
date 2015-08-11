@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.1.12
+ * Version: 2.1.13
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -94,7 +94,10 @@ class rlrsssl_really_simple_ssl {
         }
 
         //front end actions, javascript redirect, and mixed content replacement
-        add_action('wp',array($this,'make_frontend_ssl'));
+        add_action('wp_print_scripts', array($this,'force_ssl_with_javascript'));
+        add_filter('template_include', array($this,'replace_insecure_links'));
+
+        //add_action('wp',array($this,'make_frontend_ssl'));
     }
 
     public function activate() {
@@ -108,19 +111,6 @@ class rlrsssl_really_simple_ssl {
         delete_option( 'really_simple_ssl_activated' );
         add_action('admin_menu',array($this,'init_ssl'),20);
         $this->plugin_db_version = $this->plugin_version;
-      }
-    }
-
-    public function make_frontend_ssl() {
-      if ($this->site_has_ssl || $this->force_ssl_without_detection) {
-          //Always add javascript redirect, in case the htaccess redirect fails or could not be written.
-          //if (!$this->ssl_redirect_set_in_htaccess) {
-          add_action('wp_print_scripts', array($this,'force_ssl_with_javascript'));
-          //}
-
-          if ($this->autoreplace_insecure_links) {
-            add_filter('template_include', array($this,'replace_insecure_links'));
-          }
       }
     }
 
@@ -550,10 +540,12 @@ class rlrsssl_really_simple_ssl {
      *
      */
 
-    public function replace_insecure_links($template) {
-      ob_start(array($this, 'end_buffer_capture'));  // Start Page Buffer
-      return $template;
-    }
+     public function replace_insecure_links($template) {
+       if (($this->site_has_ssl || $this->force_ssl_without_detection) && $this->autoreplace_insecure_links) {
+         ob_start(array($this, 'end_buffer_capture'));  // Start Page Buffer
+       }
+       return $template;
+     }
 
     /**
      * Just before the page is sent to the visitor's browser, all homeurl links are replaced with https.
@@ -749,15 +741,17 @@ class rlrsssl_really_simple_ssl {
      *
      */
 
-    public function force_ssl_with_javascript() {
-        ?>
-        <script>
-        if (document.location.protocol != "https:") {
-            document.location = document.URL.replace(/^http:/i, "https:");
-        }
-        </script>
-    <?php
-    }
+     public function force_ssl_with_javascript() {
+       if ($this->site_has_ssl || $this->force_ssl_without_detection) {
+           ?>
+           <script>
+           if (document.location.protocol != "https:") {
+               document.location = document.URL.replace(/^http:/i, "https:");
+           }
+           </script>
+           <?php
+         }
+     }
 
     /**
      * Find if this wordpress installation is installed in a subdirectory
