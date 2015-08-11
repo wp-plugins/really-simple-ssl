@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.1.0
+ * Version: 2.1.13
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -27,9 +27,6 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
     rlrsssl: rl really simple ssl
-
-    todo:
-      multisite compatibility check
 */
 
 defined('ABSPATH') or die("you do not have acces to this page!");
@@ -47,30 +44,36 @@ class rlrsssl_really_simple_ssl {
     public
      //front end
      $force_ssl_without_detection   = FALSE,
-     $ssl_redirect_set_in_htaccess  = FALSE,
      $site_has_ssl                  = FALSE,
      $autoreplace_insecure_links    = TRUE,
      $http_urls                     = array(),
-     $https_urls                    = array(),
 
      //admin
+     //options saved in db
      $ssl_fail_message_shown        = FALSE,
      $ssl_success_message_shown     = FALSE,
+     $plugin_db_version,
+     $hsts                          = FALSE,
+
+     $ssl_redirect_set_in_htaccess  = FALSE, //moved to backend because we don't check it anymore for the javascript redirect.
      $settings_changed              = FALSE,
      $wpconfig_issue                = FALSE,
-     $ssl_type                      = "STANDARD", //or "LOADBALANCER" or "CDN"
-     $capability                    = 'install_plugins',
+     $ssl_type                      = "NA",
+                                    //"SERVER-HTTPS-ON"
+                                    //"SERVER-HTTPS-1"
+                                    //"SERVERPORT443"
+                                    //"LOADBALANCER"
+                                    //"CDN"
+     $capability                    = 'manage_options',
      $plugin_url,
      $plugin_version,
-     $error_number = 0,
+     $error_number                  = 0,
+     $htaccess_test_success         = FALSE,
      $ABSpath;
 
     public function __construct()
     {
-        $this->get_options();
-        if ($this->autoreplace_insecure_links || is_admin()) {
-          $this->build_url_lists();
-        }
+        add_action('plugins_loaded',array($this,'get_options'),20);
 
         //only for backend
         if (is_admin()) {
@@ -78,47 +81,62 @@ class rlrsssl_really_simple_ssl {
           $this->getABSPATH();
           $this->get_plugin_version();
 
+          register_activation_hook( __FILE__, array($this,'activate') );
           register_deactivation_hook(__FILE__, array($this, 'deactivate') );
-          add_action('plugins_loaded',array($this,'check_for_ssl'));
 
-          //if ssl, edit htaccess to redirect to https if possible, and change the siteurl
-          if ($this->site_has_ssl) {
-            //check for siteurl definitions in wpconfig
-            add_action('plugins_loaded',array($this,'check_for_siteurl_in_wpconfig'));
-            // wpconfig issue does not pose serious problems on the front end, so we continue, but notify of this issue when it arises
+          add_action('plugins_loaded',array($this,'check_for_upgrade'),30);
 
-            add_action('plugins_loaded',array($this,'editHtaccess'));
-            add_action('plugins_loaded',array($this,'set_siteurl_to_ssl'));
-          }
-          elseif ($this->ssl_redirect_set_in_htaccess) {
-            //check if the .htaccess was edited, if so, remove edit and set db value for htaccess edit to false
-            add_action('plugins_loaded',array($this,'removeHtaccessEdit'));
-            add_action('plugins_loaded',array($this,'remove_ssl_from_siteurl'));
-          }
+          add_action('admin_menu',array($this,'setup_admin_page'),30);
+          add_action('admin_init',array($this,'start_scan'),30);
 
-          //build the options page and options functionality
-          add_action('plugins_loaded',array($this,'admin_init'));
-
-          //check if cache should be flushed
-          if ($this->settings_changed) {
-            $cache = new rlrsssl_cache;
-            add_action('wp_loaded',array($cache,'flush'));
-          }
+          add_action('wp_ajax_dismiss_fail_message', array($this,'dismiss_fail_message_callback') );
+          add_action('wp_ajax_dismiss_success_message', array($this,'dismiss_success_message_callback') );
         }
 
-        //front end actions, only do something when .htaccess is inaccessible, or mixed content has been found
-        if ($this->site_has_ssl) {
-            //if redirect is not set in .htaccess, add javascript redirect
-            if (!$this->ssl_redirect_set_in_htaccess) {
-              add_action('wp_print_scripts', array($this,'force_ssl_with_javascript'));
-            }
+        //front end actions, javascript redirect, and mixed content replacement
+        add_action('wp_print_scripts', array($this,'force_ssl_with_javascript'));
+        add_filter('template_include', array($this,'replace_insecure_links'));
 
-            if ($this->autoreplace_insecure_links) {
-              add_filter('template_include', array($this,'replace_insecure_links'));
-            }
-        }
+        //add_action('wp',array($this,'make_frontend_ssl'));
     }
 
+    public function activate() {
+      add_option( 'really_simple_ssl_activated', 'activated' );
+    }
+
+    public function check_for_upgrade() {
+      //when plugin activated, we can not do an add_action straightaway, so we use a workaround.
+      //When plugin is just upgraded the version differs from the db version.
+      if ((get_option( 'really_simple_ssl_activated') == 'activated') || ($this->plugin_db_version!=$this->plugin_version) ) {
+        delete_option( 'really_simple_ssl_activated' );
+        add_action('admin_menu',array($this,'init_ssl'),20);
+        $this->plugin_db_version = $this->plugin_version;
+      }
+    }
+
+    /**
+     * Initialize scanning of the website for insecure links.
+     *
+     * @since  2.1
+     *
+     * @access public
+     *
+     */
+
+    public function start_scan(){
+      //set up scanning
+      //No need for scanning if no ssl certificate was detected
+      if ($this->site_has_ssl || $this->force_ssl_without_detection) {
+        $this->scan = new rlrsssl_scan;
+        $this->scan->init($this->http_urls, $this->autoreplace_insecure_links);
+        $this->scan->set_images(
+                $this->img("success"),
+                $this->img("error"),
+                $this->img("warning")
+        );
+        add_action( 'wp_ajax_scan', array($this->scan,'scan_callback'));
+      }
+    }
 
     /**
      * Creates an array of insecure links that should be https and an array of secure links to replace with
@@ -129,7 +147,7 @@ class rlrsssl_really_simple_ssl {
      *
      */
 
-    public function build_url_lists() {
+    public function build_url_list() {
       $home_no_www  = str_replace ( "://www." , "://" , get_option('home'));
       $home_yes_www = str_replace ( "://" , "://www." , $home_no_www);
 
@@ -137,9 +155,46 @@ class rlrsssl_really_simple_ssl {
           str_replace ( "https://" , "http://" , $home_yes_www),
           str_replace ( "https://" , "http://" , $home_no_www),
           "http://www.youtube", //Embed Video Fix
-          "http://ajax.googleapis.com/ajax"
+          "http://ajax.googleapis.com/ajax",
       );
-      $this->https_urls = str_replace ( "http://" , "https://" , $this->http_urls);
+    }
+
+    /**
+     * Checks for SSL and configures the site accordingly
+     * functions: check_for_ssl, test_htaccess_redirect, check_for_siteurl_in_wpconfig, editHtaccess, set_siteurl_to_ssl, flush
+     * params: backend: capability, ssl_type,
+     * params, frontend: site_has_ssl, force_ssl_without_detection
+     * @since  2.1
+     *
+     * @access public
+     *
+     */
+
+    public function init_ssl() {
+      if (current_user_can($this->capability)) {
+        $this->check_for_ssl();
+
+        //if ssl, edit htaccess to redirect to https if possible, and change the siteurl
+        if ($this->site_has_ssl || $this->force_ssl_without_detection) {
+          //only check the htaccess if we found a known ssl type.
+          if ($this->ssl_type != "NA") {
+              $this->test_htaccess_redirect();
+          }
+
+          //check for siteurl definitions in wpconfig
+          $this->check_for_siteurl_in_wpconfig();
+          //wpconfig issue does not pose serious problems on the front end, so we continue anyway, but notify of this issue when it arises
+
+          $this->editHtaccess();
+          $this->set_siteurl_to_ssl();
+        }
+
+        //check if cache should be flushed
+        if ($this->settings_changed) {
+          $cache = new rlrsssl_cache;
+          add_action('shutdown',array($cache,'flush'));
+        }
+      }
     }
 
     /**
@@ -181,6 +236,7 @@ class rlrsssl_really_simple_ssl {
       } while( ($dir = realpath("$dir/..")) && ($i<$maxiterations) );
       return null;
     }
+
     /**
      * remove https from defined siteurl and homeurl in the wpconfig, if present
      *
@@ -191,7 +247,6 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function remove_ssl_from_siteurl_in_wpconfig() {
-      if (current_user_can($this->capability)) {
         $wpconfig_path = $this->find_wp_config_path();
         if (!empty($wpconfig_path)) {
           $wpconfig = file_get_contents($wpconfig_path);
@@ -210,7 +265,6 @@ class rlrsssl_really_simple_ssl {
           }
 
         }
-      }
     }
 
     /**
@@ -224,7 +278,6 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function check_for_siteurl_in_wpconfig() {
-      if (current_user_can($this->capability)) {
         $wpconfig_path = $this->find_wp_config_path();
         if (!empty($wpconfig_path)) {
           $wpconfig = file_get_contents($wpconfig_path);
@@ -247,7 +300,6 @@ class rlrsssl_really_simple_ssl {
           }
 
         }
-      }
     }
 
     /**
@@ -260,12 +312,10 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function set_siteurl_to_ssl() {
-      if (current_user_can($this->capability)) {
         $siteurl_ssl = str_replace ( "http://" , "https://" , get_option('siteurl'));
         $homeurl_ssl = str_replace ( "http://" , "https://" , get_option('home'));
         update_option('siteurl',$siteurl_ssl);
         update_option('home',$homeurl_ssl);
-      }
     }
 
     /**
@@ -286,34 +336,65 @@ class rlrsssl_really_simple_ssl {
       }
     }
 
+    /**
+     * Get the options for this plugin
+     *
+     * @since  2.0
+     *
+     * @access public
+     *
+     */
+
     public function get_options(){
       $options = get_option('rlrsssl_options');
 
       if (isset($options)) {
-        $this->ssl_redirect_set_in_htaccess = isset($options['ssl_redirect_set_in_htaccess']) ? $options['ssl_redirect_set_in_htaccess'] : FALSE;
-        $this->site_has_ssl = isset($options['site_has_ssl']) ? $options['site_has_ssl'] : FALSE;
         $this->force_ssl_without_detection = isset($options['force_ssl_without_detection']) ? $options['force_ssl_without_detection'] : FALSE;
+        $this->site_has_ssl = isset($options['site_has_ssl']) ? $options['site_has_ssl'] : FALSE;
+        $this->hsts = isset($options['hsts']) ? $options['hsts'] : FALSE;
         $this->ssl_fail_message_shown = isset($options['ssl_fail_message_shown']) ? $options['ssl_fail_message_shown'] : FALSE;
         $this->ssl_success_message_shown = isset($options['ssl_success_message_shown']) ? $options['ssl_success_message_shown'] : FALSE;
-        $this->settings_changed = isset($options['settings_changed']) ? $options['settings_changed'] : FALSE;
         $this->autoreplace_insecure_links = isset($options['autoreplace_insecure_links']) ? $options['autoreplace_insecure_links'] : TRUE;
+        $this->plugin_db_version = isset($options['plugin_db_version']) ? $options['plugin_db_version'] : "1.0";
+      }
+
+      if ($this->autoreplace_insecure_links || is_admin()) {
+        $this->build_url_list();
       }
     }
 
+    /**
+     * Save the plugin options
+     *
+     * @since  2.0
+     *
+     * @access public
+     *
+     */
+
     public function save_options() {
       $options = array(
-        'ssl_redirect_set_in_htaccess'  => $this->ssl_redirect_set_in_htaccess,
-        'site_has_ssl'                  => $this->site_has_ssl,
         'force_ssl_without_detection'   => $this->force_ssl_without_detection,
+        'site_has_ssl'                  => $this->site_has_ssl,
+        'hsts'                          => $this->hsts,
         'ssl_fail_message_shown'        => $this->ssl_fail_message_shown,
         'ssl_success_message_shown'     => $this->ssl_success_message_shown,
-        'settings_changed'              => $this->settings_changed,
         'autoreplace_insecure_links'    => $this->autoreplace_insecure_links,
+        'plugin_db_version'             => $this->plugin_db_version,
       );
 
       update_option('rlrsssl_options',$options);
 
     }
+
+    /**
+     * Load the translation files
+     *
+     * @since  1.0
+     *
+     * @access public
+     *
+     */
 
     public function load_translation()
     {
@@ -333,12 +414,11 @@ class rlrsssl_really_simple_ssl {
       $this->removeHtaccessEdit();
       $this->remove_ssl_from_siteurl();
       $this->remove_ssl_from_siteurl_in_wpconfig();
-      $this->ssl_redirect_set_in_htaccess = FALSE;
-      $this->site_has_ssl                 = FALSE;
       $this->force_ssl_without_detection  = FALSE;
+      $this->site_has_ssl                 = FALSE;
+      $this->hsts                         = FALSE;
       $this->ssl_fail_message_shown       = FALSE;
       $this->ssl_success_message_shown    = FALSE;
-      $this->settings_changed             = FALSE;
       $this->autoreplace_insecure_links   = TRUE;
       $this->save_options();
       //@TODO add cache flushing here
@@ -367,36 +447,87 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function check_for_ssl() {
-      if (current_user_can($this->capability)) {
-          $site_has_ssl = $this->site_has_ssl;
-          $testpage_url = trailingslashit(str_replace ("http://" , "https://" , $this->plugin_url))."ssl-test-page.php";
-          //do the error handling myself, because non functioning ssl will result in a warning
-          set_error_handler(array($this,'custom_error_handling'));
-          $filecontents = file_get_contents($testpage_url);
-          //errors back to normal
-          restore_error_handler();
-          if ($this->error_number==0) {
-            $this->site_has_ssl = TRUE;
-            //check the type of ssl
-            if (strpos($filecontents, "#STANDARD-SSL#") !== false) {
-              $this->ssl_type = "STANDARD";
-            } elseif (strpos($filecontents, "#LOADBALANCER#") !== false) {
-              $this->ssl_type = "LOADBALANCER";
-            } elseif (strpos($filecontents, "#CDN#") !== false) {
-              $this->ssl_type = "CDN";
-            }
-          }
-          else {
-            $this->site_has_ssl = FALSE;
-            //reset error
-            $this->error_number = 0;
-          }
+      if (!current_user_can($this->capability)) {exit();}
+      $site_has_ssl = $this->site_has_ssl;
+      $testpage_url = trailingslashit(str_replace ("http://" , "https://" , $this->plugin_url))."ssl-test-page.php";
+      //do the error handling myself, because non functioning ssl will result in a warning
+      set_error_handler(array($this,'custom_error_handling'));
+      $filecontents = file_get_contents($testpage_url);
+      //errors back to normal
+      restore_error_handler();
+      if ($this->error_number==0) {
+        $this->site_has_ssl = TRUE;
+        //check the type of ssl
+        if (strpos($filecontents, "#LOADBALANCER#") !== false) {
+          $this->ssl_type = "LOADBALANCER";
+        } elseif (strpos($filecontents, "#CDN#") !== false) {
+          $this->ssl_type = "CDN";
+        } elseif (strpos($filecontents, "#SERVER-HTTPS-ON#") !== false) {
+          $this->ssl_type = "SERVER-HTTPS-ON";
+        } elseif (strpos($filecontents, "#SERVER-HTTPS-1#") !== false) {
+          $this->ssl_type = "SERVER-HTTPS-1";
+        } elseif (strpos($filecontents, "#SERVERPORT443#") !== false) {
+          $this->ssl_type = "SERVERPORT443";
+        } else {
+          //no recognized response, so set to NA
+          $this->ssl_type = "NA";
+        }
+      }
+      else {
+        $this->site_has_ssl = FALSE;
+        //reset error
+        $this->error_number = 0;
+      }
 
-          if ($site_has_ssl != $this->site_has_ssl) {
-            //value has changed, note this so we can flush the cache later.
-            $this->settings_changed = TRUE;
-          }
-          $this->save_options();
+      if ($site_has_ssl != $this->site_has_ssl) {
+        //value has changed, note this so we can flush the cache later.
+        $this->settings_changed = TRUE;
+      }
+      $this->save_options();
+    }
+
+    /**
+     * Test if the htaccess redirect will work
+     * This way, no redirect loops occur.
+     *
+     * @since  2.1
+     *
+     * @access public
+     *
+     */
+
+    public function test_htaccess_redirect() {
+      if (!current_user_can($this->capability)) {exit();}
+      $test_dir = trailingslashit(plugin_dir_path( __FILE__ ))."testssl/";
+      $htaccess_file = $test_dir.".htaccess";
+      $webpage_file = $test_dir."ssl-test-page.html";
+
+      $url = wp_nonce_url('options-general.php?page=rlrsssl_really_simple_ssl','really-simple-ssl-settings');
+      if (false === ($creds = request_filesystem_credentials($url, '', false, false, null) ) ) {
+      	return; // stop processing here
+      }
+
+      if ( ! WP_Filesystem($creds) ) {
+      	request_filesystem_credentials($url, '', true, false, null);
+      	return;
+      }
+      //insert htaccess rules for the detected config
+      $htaccess_content = $this->get_redirect_rules(TRUE)."#test";
+      global $wp_filesystem;
+      $wp_filesystem->put_contents($htaccess_file, $htaccess_content, FS_CHMOD_FILE);
+
+      $testpage_url = str_replace ("http://" , "https://" ,$this->plugin_url."testssl/ssl-test-page.html");
+
+      //do the error handling myself, because non functioning ssl will result in a warning
+      set_error_handler(array($this,'custom_error_handling'));
+      $filecontents = file_get_contents($testpage_url);
+      //errors back to normal
+      restore_error_handler();
+      if ($this->error_number==0) {
+        $this->htaccess_test_success = TRUE;
+      }else{
+        //.htaccess rewrite rule seems to be giving problems.
+        $this->htaccess_test_success = FALSE;
       }
     }
 
@@ -409,16 +540,18 @@ class rlrsssl_really_simple_ssl {
      *
      */
 
-    public function replace_insecure_links($template) {
-      ob_start(array($this, 'end_buffer_capture'));  // Start Page Buffer
-      return $template;
-    }
+     public function replace_insecure_links($template) {
+       if (($this->site_has_ssl || $this->force_ssl_without_detection) && $this->autoreplace_insecure_links) {
+         ob_start(array($this, 'end_buffer_capture'));  // Start Page Buffer
+       }
+       return $template;
+     }
 
     /**
      * Just before the page is sent to the visitor's browser, all homeurl links are replaced with https.
      *
-     * filters: rlrsssl_replacewith_url_args, rlrsssl_replace_url_args
-     * These filters allow for extending the range of urls that are replaced with https.
+     * filters: rlrsssl_replace_url_args (rlrsssl_replacewith_url_args,  is deprecated)
+     * These filter allows for extending the range of urls that are replaced with https.
      *
      * @since  1.0
      *
@@ -427,8 +560,8 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function end_buffer_capture($buffer) {
-      $search_array = apply_filters( 'rlrsssl_replace_url_args', $this->http_urls);
-      $ssl_array = apply_filters( 'rlrsssl_replacewith_url_args', $this->https_urls);
+      $search_array = apply_filters('rlrsssl_replace_url_args', $this->http_urls);
+      $ssl_array = str_replace ( "http://" , "https://" , $this->http_urls);
 
       //now replace these links
       $buffer = str_replace ($search_array , $ssl_array , $buffer);
@@ -445,9 +578,6 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function removeHtaccessEdit() {
-      //when admin is logged in, update .htaccess if possible and necessary
-      if (current_user_can($this->capability)) {
-
         if(file_exists($this->ABSpath.".htaccess") && is_writable($this->ABSpath.".htaccess")){
 
           $htaccess = file_get_contents($this->ABSpath.".htaccess");
@@ -458,7 +588,6 @@ class rlrsssl_really_simple_ssl {
           $this->ssl_redirect_set_in_htaccess =  FALSE;
           $this->save_options();
         }
-      }
     }
 
     public function contains_previous_version($htaccess) {
@@ -489,6 +618,24 @@ class rlrsssl_really_simple_ssl {
     }
 
     /**
+     * Checks if the hsts rule is already in the htaccess file
+     *
+     * @since  2.1
+     *
+     * @access public
+     *
+     */
+
+    public function contains_hsts($htaccess) {
+      preg_match("/Header always set Strict-Transport-Security/", $htaccess, $check);
+      if(count($check) === 0){
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+    /**
      * Adds redirect to https rules to the .htaccess file.
      *
      * @since  2.0
@@ -498,24 +645,28 @@ class rlrsssl_really_simple_ssl {
      */
 
     public function editHtaccess(){
-      //when admin is logged in, update .htaccess if possible and necessary
-      if (current_user_can($this->capability)) {
+        if (!current_user_can($this->capability)) {exit();}
         //check if htacces exists and  if htaccess is writable
         //update htaccess to redirect to ssl and set redirect_set_in_htaccess
 
-        if (!file_exists($this->ABSpath.".htaccess") || !is_writable($this->ABSpath.".htaccess")) {
-          $this->ssl_redirect_set_in_htaccess =  FALSE;
-        } else {
+        if ( !defined( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' ) ) {
+            define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , FALSE );
+        }
+
+        if (!RLRSSSL_DO_NOT_EDIT_HTACCESS && file_exists($this->ABSpath.".htaccess") && is_writable($this->ABSpath.".htaccess")) {
           //exists and is writable
           $htaccess = file_get_contents($this->ABSpath.".htaccess");
           $rules = $this->get_redirect_rules();
+          //is superfluous, is already set in rediret_rules function
+          //$this->ssl_redirect_set_in_htaccess = (($this->ssl_type!="NA") && $this->htaccess_test_success);
 
           if(!$this->contains_rsssl_rules($htaccess)){
             //really simple ssl rules not in the file, so add.
             $htaccess = $htaccess.$rules;
             file_put_contents($this->ABSpath.".htaccess", $htaccess);
-          } elseif ($this->contains_previous_version($htaccess)) {
-            //old version, so remove all rules and add new.
+          } elseif ($this->contains_previous_version($htaccess) || ($this->hsts!=$this->contains_hsts($htaccess))) {
+            //old version, so remove all rules and add new
+            //or the hsts option has changed, so we need to edit the htaccess anyway.
             $htaccess = preg_replace("/#\s?BEGIN\s?rlrssslReallySimpleSSL.*?#\s?END\s?rlrssslReallySimpleSSL/s", "", $htaccess);
             $htaccess = preg_replace("/\n+/","\n", $htaccess);
             $htaccess = $htaccess.$rules;
@@ -523,10 +674,11 @@ class rlrsssl_really_simple_ssl {
           } else {
             //current version, so do nothing.
           }
-          $this->ssl_redirect_set_in_htaccess =  TRUE;
+        } else {
+          $this->ssl_redirect_set_in_htaccess =  FALSE;
         }
+        //if the htaccess setting was changed, we save it here.
         $this->save_options();
-      }
     }
 
     /**
@@ -538,25 +690,42 @@ class rlrsssl_really_simple_ssl {
      *
      */
 
-    public function get_redirect_rules() {
+    public function get_redirect_rules($for_test_file=false) {
+        //only add the redirect rules when a known type of ssl was detected. Otherwise, we use https.
         $rule  = "# BEGIN rlrssslReallySimpleSSL rsssl_version[".$this->plugin_version."]\n";
-        $rule .= "RewriteEngine on"."\n";
 
-        //select rewrite rule based on detected type of ssl
-        if ($this->ssl_type == "LOADBALANCER") {
-            $rule .="RewriteCond %{HTTP:X-Forwarded-Proto} !https"."\n";
-        } elseif ($this->ssl_type == "CDN") {
-            $rule .= "RewriteCond %{HTTP:X-Forwarded-SSL} !on"."\n";
+        //if the htaccess test was successfull, and we know the redirectype, edit
+        if (($this->htaccess_test_success && $this->ssl_type != "NA") || $for_test_file) {
+          //set redirect_set_in_htaccess to true, because we are now making a redirect rule.
+          $this->ssl_redirect_set_in_htaccess = TRUE;
+          $rule .= "<IfModule mod_rewrite.c>"."\n";
+          $rule .= "RewriteEngine on"."\n";
+
+          //select rewrite condition based on detected type of ssl
+          if ($this->ssl_type == "SERVER-HTTPS-ON") {
+              $rule .= "RewriteCond %{HTTPS} !=on [NC]"."\n";
+          } elseif ($this->ssl_type == "SERVER-HTTPS-1") {
+              $rule .= "RewriteCond %{HTTPS} !=1"."\n";
+          } elseif ($this->ssl_type == "SERVERPORT443") {
+             $rule .= "RewriteCond %{SERVER_PORT} !443"."\n";
+          } elseif ($this->ssl_type == "LOADBALANCER") {
+              $rule .="RewriteCond %{HTTP:X-Forwarded-Proto} !https"."\n";
+          } elseif ($this->ssl_type == "CDN") {
+              $rule .= "RewriteCond %{HTTP:X-Forwarded-SSL} !on"."\n";
+          }
+          //$rule .= "RewriteRule ^(.*)$ https\:\/\/%{HTTP_HOST}\/$1 [R=301,L]"."\n";
+          $rule .= "RewriteRule ^(.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]"."\n";
+          $rule .= "</IfModule>"."\n";
         } else {
-            $rule .= "RewriteCond %{HTTPS} !=on"."\n";
+          $this->ssl_redirect_set_in_htaccess = FALSE;
         }
 
-        $rule .= "RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]"."\n";
-
-        //owasp security best practive https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
-        $rule .= "<IfModule mod_headers.c>"."\n";
-        $rule .= "Header always set Strict-Transport-Security 'max-age=31536000' env=HTTPS"."\n";
-        $rule .= "</IfModule>"."\n";
+        if ($this->hsts && !$for_test_file) {
+          //owasp security best practice https://www.owasp.org/index.php/HTTP_Strict_Transport_Security
+          $rule .= "<IfModule mod_headers.c>"."\n";
+          $rule .= "Header always set Strict-Transport-Security 'max-age=31536000' env=HTTPS"."\n";
+          $rule .= "</IfModule>"."\n";
+        }
 	      $rule .= "# END rlrssslReallySimpleSSL"."\n";
 
         $rule = preg_replace("/\n+/","\n", $rule);
@@ -572,15 +741,17 @@ class rlrsssl_really_simple_ssl {
      *
      */
 
-    public function force_ssl_with_javascript() {
-        ?>
-        <script>
-        if (document.location.protocol != "https:") {
-            document.location = document.URL.replace(/^http:/i, "https:");
-        }
-        </script>
-    <?php
-    }
+     public function force_ssl_with_javascript() {
+       if ($this->site_has_ssl || $this->force_ssl_without_detection) {
+           ?>
+           <script>
+           if (document.location.protocol != "https:") {
+               document.location = document.URL.replace(/^http:/i, "https:");
+           }
+           </script>
+           <?php
+         }
+     }
 
     /**
      * Find if this wordpress installation is installed in a subdirectory
@@ -648,7 +819,8 @@ class rlrsssl_really_simple_ssl {
 
   public function show_notices()
   {
-    if (!$this->site_has_ssl && !$this->ssl_fail_message_shown && !$this->force_ssl_without_detection) {
+    if (!($this->site_has_ssl || $this->force_ssl_without_detection)  && !$this->ssl_fail_message_shown) {
+      parse_str($_SERVER['QUERY_STRING'], $params);
       add_action('admin_print_footer_scripts', array($this, 'insert_dismiss_fail'));
         ?>
 
@@ -656,6 +828,8 @@ class rlrsssl_really_simple_ssl {
         <?php _e("No SSL was detected. If you are just waiting for your ssl certificate to kick in you can dismiss this warning.","rlrsssl-really-simple-ssl");?>
         </p>
         <p><strong>
+        <?php printf('<a href="%1$s">'.__("I'm sure I have an active SSL certificate, force it!","rlrsssl-really-simple-ssl").'</a>', '?'.http_build_query(array_merge($params, array('rlrsssl_force_ssl'=>'1'))));?>
+        |
         <a href="options-general.php?page=rlrsssl_really_simple_ssl"><?php echo __("View your detected setup","rlrsssl-really-simple-ssl");?></a>
         </strong></p></div>
         <?php
@@ -672,7 +846,7 @@ class rlrsssl_really_simple_ssl {
 
     }
 
-    if ($this->site_has_ssl && $this->wpconfig_issue) {
+    if (($this->site_has_ssl || $this->force_ssl_without_detection) && $this->wpconfig_issue) {
       ?>
       <div id="message" class="error fade notice"><p>
       <?php echo __("We detected a definition of siteurl or homeurl in your wp-config.php, but the file is not writable. Because of this, we cannot set the siteurl to https.","rlrsssl-really-simple-ssl");?>
@@ -759,7 +933,6 @@ class rlrsssl_really_simple_ssl {
   public function dismiss_fail_message_callback() {
     global $wpdb;
     check_ajax_referer( 'rlrsssl-really-simple-ssl', 'security' );
-
     $this->ssl_fail_message_shown = TRUE;
     $this->save_options();
     wp_die(); // this is required to terminate immediately and return a proper response
@@ -767,11 +940,13 @@ class rlrsssl_really_simple_ssl {
 
   public function process_submit_without_form() {
       if ( isset($_GET['rlrsssl_fixposts']) && '1' == $_GET['rlrsssl_fixposts'] ) {
-
         //$database->fix_insecure_post_links();
       }
-      $this->save_options();
 
+      if ( isset($_GET['rlrsssl_force_ssl']) && '1' == $_GET['rlrsssl_force_ssl'] ) {
+        $this->force_ssl_without_detection = TRUE;
+      }
+      $this->save_options();
   	}
 
 
@@ -821,9 +996,21 @@ class rlrsssl_really_simple_ssl {
       ) );
 
       $screen->add_help_tab( array(
+          'id'	=> "HSTS",
+          'title'	=> __("HTTP Strict Transport Security (HSTS)","rlrsssl-really-simple-ssl"),
+          'content'	=> '<p>' . __("Using this option will prevent users from visiting your website over http for one year, so use this option with caution! HTTP Strict Transport Security (HSTS) is an opt-in security enhancement that is specified by a web application through the use of a special response header. Once a supported browser receives this header that browser will prevent any communications from being sent over HTTP to the specified domain and will instead send all communications over HTTPS. It also prevents HTTPS click through prompts on browsers. ","rlrsssl-really-simple-ssl") . '</p>',
+      ) );
+
+      $screen->add_help_tab( array(
           'id'	=> "ssl_certificate",
           'title'	=> __("How to get an SSL certificate","rlrsssl-really-simple-ssl"),
           'content'	=> '<p>' . __("To secure your site with ssl, you need an SSL certificate. How you can get a certificate depends on your hosting provider, but can often be requested on the control panel of your website. If you are not sure what to do, you can contact your hosting provider.","rlrsssl-really-simple-ssl") . '</p>',
+      ) );
+
+      $screen->add_help_tab( array(
+          'id'	=> "force_ssl_without_detection",
+          'title'	=> __("Force SSL without detection","rlrsssl-really-simple-ssl"),
+          'content'	=> '<p>' . __("This plugin tries to open a page within the plugin directory over https. If that fails, it is assumed that ssl is not availble. But as this may not cover all eventualities, it is possible to force the site over ssl anyway.<br><br> If you force your site over ssl without a valid ssl certificate, your site may break. In that case, remove the 'really simple ssl' rules from your .htaccess file (if present), and remove or rename the really simple ssl plugin.","rlrsssl-really-simple-ssl") . '</p>',
       ) );
   }
 
@@ -838,6 +1025,11 @@ class rlrsssl_really_simple_ssl {
      */
 
   public function settings_page() {
+    if (!has_action('admin_menu','init_ssl') ) {
+        $this->init_ssl();
+        //add_action('admin_menu',array($this,'init_ssl'),50);
+    }
+
     //only add scan ajax script if scan was activated
     if (isset($this->scan)) {
       add_action('admin_print_footer_scripts', array($this->scan, 'insert_scan'));
@@ -856,11 +1048,14 @@ class rlrsssl_really_simple_ssl {
               <td><?php echo $this->site_has_ssl ? $this->img("success") : $this->img("error");?></td>
               <td><?php
                       if (!$this->site_has_ssl) {
-                        echo __("No SSL detected.","rlrsssl-really-simple-ssl")."&nbsp;";
+                        if (!$this->force_ssl_without_detection)
+                          echo __("No SSL detected.","rlrsssl-really-simple-ssl")."&nbsp;";
+                        else
+                          echo __("No SSL detected, but SSL is forced.","rlrsssl-really-simple-ssl")."&nbsp;";
                       }
                       else {
                         //ssl detected, no problems!
-                        _e("An SSL certificate appears to be active on your site. ","rlrsssl-really-simple-ssl");
+                        _e("An SSL certificate was detected on your site. ","rlrsssl-really-simple-ssl");
                       }
                   ?>
                 </td>
@@ -871,16 +1066,36 @@ class rlrsssl_really_simple_ssl {
                 <?php echo $this->ssl_redirect_set_in_htaccess ? $this->img("success") :$this->img("warning");?>
               </td>
               <td>
-                <?php echo $this->ssl_redirect_set_in_htaccess ? __("https redirect set in .htaccess","rlrsssl-really-simple-ssl") :__("Https redirect was set in javascript, because .htaccess was not available or writable.","rlrsssl-really-simple-ssl");?>
+              <?php
+                if($this->ssl_redirect_set_in_htaccess) {
+                   _e("https redirect set in .htaccess","rlrsssl-really-simple-ssl");
+                } elseif (!$this->htaccess_test_success) {
+                   _e("Https redirect was set in javascript, because the proposed redirect for the htaccess would result in a redirect loop. If you find a successfull way to redirect for your specific situation, please send your domain and your redirect rule to info@rogierlankhorst.com","rlrsssl-really-simple-ssl");
+                } else {
+                   _e("Https redirect was set in javascript, because .htaccess was not available or writable, or the ssl configuration was not recognized.","rlrsssl-really-simple-ssl");
+                }
+              ?>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <?php echo $this->hsts ? $this->img("success") :$this->img("warning");?>
+              </td>
+              <td>
+              <?php
+                if($this->hsts) {
+                   _e("HTTP Strict Transport Security was set in the .htaccess","rlrsssl-really-simple-ssl");
+                } else {
+                   _e("HTTP Strict Transport Security was not set in your .htaccess. Do this only if your setup is fully working, and only when you do not plan to revert to http.","rlrsssl-really-simple-ssl");
+                }
+              ?>
               </td>
             </tr>
             <?php }
             ?>
 
           </table>
-        <?php
-        if ($this->site_has_ssl) {
-        ?>
+
           <form action="options.php" method="post">
           <?php
               settings_fields('rlrsssl_options');
@@ -889,9 +1104,7 @@ class rlrsssl_really_simple_ssl {
 
           <input class="button button-primary" name="Submit" type="submit" value="<?php echo __("Save","rlrsssl-really-simple-ssl"); ?>" />
           </form>
-          <?php
-        }
-          ?>
+
       </div>
   <?php
   }
@@ -929,7 +1142,7 @@ class rlrsssl_really_simple_ssl {
 
   public function enqueue_assets(){
     wp_register_style( 'rlrsssl-css', $this->plugin_url . 'css/main.css');
-    wp_enqueue_style( 'rlrsssl-css' );
+    wp_enqueue_style( 'rlrsssl-css');
   }
 
     /**
@@ -941,32 +1154,23 @@ class rlrsssl_really_simple_ssl {
      *
      */
 
-  public function admin_init(){
+  public function setup_admin_page(){
     if (current_user_can($this->capability)) {
-      add_action( 'admin_enqueue_scripts', array($this, 'enqueue_assets'));
-      add_action('init', array($this, 'load_translation'));
 
-      //set up scanning
-      //No need for scanning if no ssl certificate was detected
-      if ($this->site_has_ssl) {
-        $this->scan = new rlrsssl_scan;
-        $this->scan->init($this->http_urls, $this->autoreplace_insecure_links);
-        $this->scan->set_images($this->img("success"),$this->img("error"),$this->img("warning"));
-        add_action( 'wp_ajax_scan', array($this->scan,'scan_callback'));
-      }
+      add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
+      add_action('admin_init', array($this, 'load_translation'),20);
 
       //settings page, from creation and settings link in the plugins page
-      add_action('admin_menu', array($this, 'add_settings_page'));
-      add_action('admin_init', array($this, 'create_form'));
+      add_action('admin_menu', array($this, 'add_settings_page'),40);
+      add_action('admin_init', array($this, 'create_form'),40);
       $plugin = plugin_basename(__FILE__);
       add_filter("plugin_action_links_$plugin", array($this,'plugin_settings_link'));
 
       //actions submitted outside the form
-      add_action('admin_init', array($this, 'process_submit_without_form'));
+      add_action('admin_init', array($this, 'process_submit_without_form'),50);
 
       //handle notices
-      add_action( 'wp_ajax_dismiss_fail_message', array($this,'dismiss_fail_message_callback') );
-      add_action( 'wp_ajax_dismiss_success_message', array($this,'dismiss_success_message_callback') );
+
       add_action('admin_notices', array($this,'show_notices'));
     }
   }
@@ -984,12 +1188,19 @@ class rlrsssl_really_simple_ssl {
         //only show option to enable or disable autoreplace when ssl is detected
         register_setting( 'rlrsssl_options', 'rlrsssl_options', array($this,'options_validate') );
         add_settings_section('rlrsssl_settings', __("Settings","rlrsssl-really-simple-ssl"), array($this,'section_text'), 'rlrsssl');
-        add_settings_field('id_autoreplace_insecure_links', __("Auto replace insecure links","rlrsssl-really-simple-ssl"), array($this,'get_option_autoreplace_insecure_links'), 'rlrsssl', 'rlrsssl_settings');
 
-        //force is deprecated
-        //if(!$this->site_has_ssl) {
-        //  add_settings_field('id_force_ssl_without_detection', __("Force SSL without detection","rlrsssl-really-simple-ssl"), array($this,'get_option_force_ssl_withouth_detection'), 'rlrsssl', 'rlrsssl_settings');
-        //}
+        if($this->site_has_ssl || $this->force_ssl_without_detection) {
+          add_settings_field('id_autoreplace_insecure_links', __("Auto replace insecure links","rlrsssl-really-simple-ssl"), array($this,'get_option_autoreplace_insecure_links'), 'rlrsssl', 'rlrsssl_settings');
+        }
+
+        if($this->site_has_ssl && file_exists($this->ABSpath.".htaccess") && is_writable($this->ABSpath.".htaccess")) {
+          add_settings_field('id_hsts', __("Turn HTTP Strict Transport Security on","rlrsssl-really-simple-ssl"), array($this,'get_option_hsts'), 'rlrsssl', 'rlrsssl_settings');
+        }
+
+        if(!$this->site_has_ssl) {
+          //no sense in showing force or ignore warning options when ssl is detected: everything should work fine
+          add_settings_field('id_force_ssl_without_detection', __("Force SSL without detection","rlrsssl-really-simple-ssl"), array($this,'get_option_force_ssl_withouth_detection'), 'rlrsssl', 'rlrsssl_settings');
+        }
       }
 
     /**
@@ -1023,23 +1234,24 @@ class rlrsssl_really_simple_ssl {
   public function options_validate($input) {
     //fill array with current values, so we don't lose any
     $newinput = array();
-    $newinput['ssl_redirect_set_in_htaccess'] = $this->ssl_redirect_set_in_htaccess;
     $newinput['site_has_ssl']                 = $this->site_has_ssl;
     $newinput['ssl_success_message_shown']    = $this->ssl_success_message_shown;
     $newinput['ssl_fail_message_shown']       = $this->ssl_fail_message_shown;
-    $newinput['force_ssl_without_detection']  = $this->force_ssl_without_detection;
-    $newinput['autoreplace_insecure_links']   = $this->autoreplace_insecure_links;
+    $newinput['plugin_db_version']            = $this->plugin_db_version;
+    //$newinput['hsts']                         = $this->hsts;
+    //$newinput['autoreplace_insecure_links']   = $this->autoreplace_insecure_links;
 
-
-/*
-    //force option deprecated
+    if (!empty($input['hsts']) && $input['hsts']=='1') {
+      $newinput['hsts'] = TRUE;
+    } else {
+      $newinput['hsts'] = FALSE;
+    }
 
     if (!empty($input['force_ssl_without_detection']) && $input['force_ssl_without_detection']=='1') {
       $newinput['force_ssl_without_detection'] = TRUE;
     } else {
       $newinput['force_ssl_without_detection'] = FALSE;
     }
-*/
 
     if (!empty($input['autoreplace_insecure_links']) && $input['autoreplace_insecure_links']=='1') {
       $newinput['autoreplace_insecure_links'] = TRUE;
@@ -1047,7 +1259,7 @@ class rlrsssl_really_simple_ssl {
       $newinput['autoreplace_insecure_links'] = FALSE;
     }
 
-    //try to flush cache, because a change to autoreplace or force_ssl should be made visible as soon as possible
+    //try to flush cache, because a change to autoreplace should be made visible as soon as possible
     $cache = new rlrsssl_cache;
     $cache->flush();
     return $newinput;
@@ -1062,10 +1274,24 @@ class rlrsssl_really_simple_ssl {
      *
      */
 
-  public function get_option_force_ssl_withouth_detection() {
+  public function get_option_hsts() {
     $options = get_option('rlrsssl_options');
-    echo '<input id="rlrsssl_options"  onClick="return confirm(\''.__("Are you sure? This could seriously break up your site! Backup before you go!","rlrsssl-really-simple-ssl").'\');" name="rlrsssl_options[force_ssl_without_detection]" size="40" type="checkbox" value="1"' . checked( 1, $this->force_ssl_without_detection, false ) ." />";
+    echo '<input id="rlrsssl_options"  onClick="return confirm(\''.__("Are you sure? Your visitors will keep going to a https site for a year after you turn this off.","rlrsssl-really-simple-ssl").'\');" name="rlrsssl_options[hsts]" size="40" type="checkbox" value="1"' . checked( 1, $this->hsts, false ) ." />";
   }
+
+  /**
+   * Insert option into settings form
+   *
+   * @since  2.0
+   *
+   * @access public
+   *
+   */
+
+public function get_option_force_ssl_withouth_detection() {
+  $options = get_option('rlrsssl_options');
+  echo '<input id="rlrsssl_options" onClick="return confirm(\''.__("Are you sure you have an SSL certifcate? Forcing ssl on a non-ssl site can break your site.","rlrsssl-really-simple-ssl").'\');" name="rlrsssl_options[force_ssl_without_detection]" size="40" type="checkbox" value="1"' . checked( 1, $this->force_ssl_without_detection, false ) ." />";
+}
 
   /**
    * Insert option into settings form
