@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.3
-Stable tag: 2.1.13
+Stable tag: 2.1.14
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -42,18 +42,22 @@ define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , TRUE );
 
 = Feedback is welcome! =
 If you have any problems, I am happy to help, but I can only help with sufficient information, like: how does your .htaccess look, and on what domain is your website located.
+In the latest release, you can activate debug. Mail the results in the settings page to me.
 
 For more information: go to the [website](http://www.rogierlankhorst.com/really-simple-ssl/), or
 [contact](http://www.rogierlankhorst.com/really-simple-ssl-contact-form/) me if you have any questions or suggestions.
 
+= Next version =
+I am working on support of per-site activation of this plugin in multisite.
+
 == Installation ==
 To install this plugin:
 
-1. Download the plugin
-2. Upload the plugin to the wp-content/plugins directory,
-3. Go to “plugins” in your wordpress admin, then click activate.
-4. If you haven’t done so already, install your ssl certificate
-5. Refresh your WP dashboard, or log on. You should now see a success message.
+1. Install your ssl certificate
+2. Download the plugin
+3. Upload the plugin to the wp-content/plugins directory,
+4. Go to “plugins” in your wordpress admin, then click activate.
+5. You will get redirected to the login screen. If not, go to the login screen and log on.
 
 Now, when you go to your site, this plugin will force the website over https, and to prevent errors it will make sure every url that points to your site url is https as well.
 
@@ -61,6 +65,11 @@ For more information: go to the [website](http://www.rogierlankhorst.com/really-
 [contact](http://www.rogierlankhorst.com/really-simple-ssl-contact-form/) me if you have any questions or suggestions.
 
 == Frequently Asked Questions ==
+= I installed this plugin, but I still have mixec content warning. How to fix? =
+* Clear the cache of your wordpress site, if you use a caching plugin.
+* If that doesn't work, your site probably includes external resources. Use "inspect element" on your website to see what links are causing this (you can ignore hyperlinks).
+And add them to the replace array with the "replace_url_args" filter explained below.
+
 = Is it possible to exclude certain urls from the ssl redirect? =
 * That is not possible. This plugin simply forces your complete site over https, which keeps it lightweight.
 
@@ -89,10 +98,13 @@ add_filter("rlrsssl_replace_url_args","my_custom_http_urls");
 
 Needless to say, these urls should be available over ssl, otherwise it won’t work…
 
-= How to uninstall when backend is not accessible =
-* Until 2.0, this could happen in case of loadbalancers. If you encounter issues, please let me know.
+= How to uninstall when website/backend is not accessible/has a redirect loop? =
+* Almost certainly it is the redirect in the .htaccess that is causing the trouble. If that is the case follow these steps:
+1. Add to your wp-config.php:
+   define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , TRUE );
+2. Remove the .htaccess rewrite rules from your .htaccess
 
-With your ftp program, do the following 3 steps:
+If you still have issues and want to deactivate, follow these steps:
 
 1. Remove the plug-in rules from the .htaccess file
 
@@ -101,9 +113,12 @@ With your ftp program, do the following 3 steps:
 update_option('siteurl','http://example.com');
 update_option('home','http://example.com');
 
-to your functions.php (where example.com is your domain of course)
+to your functions.php (where example.com is your domain of course). Remove afterwards.
+If you use defines in your wp-config.php or functions.php for your urls, change that too.
 
 3. rename the plug-in folder (wp-content/plugins/really-simple-ssl) to really-simple-ssl-off.
+
+4. Check if your wp-config.php was edited, if so, remove the really simple ssl lines.
 
 = Is the plugin suitable for wordpress multisite? =
 * Yes, it works on multisite, both with domain mapping and with subdomains. The plugin should be activated for all sites though. If you want
@@ -116,8 +131,15 @@ to activate per site, you have to prevent the plugin from editing the .htaccess.
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.1.14 =
+* Added support for loadbalancer without a set https server variable: in that case a wp-config fix is needed.
+* Improved performance
+* Added debuggin option, so a trace log can be viewed
+* Fixed a bug where the rlrsssl_replace_url_args filter was not applied correctly.
+
 = 2.1.13 =
 * Fixed an issue where in some configurations the replace url filter did not fire
+
 = 2.1.12 =
 * Added the force SSL option, in cases where SSL could not be detected for some reason.
 * Added a test to check if the proposed .htaccess rules will work in the current environment.
@@ -182,7 +204,7 @@ to activate per site, you have to prevent the plugin from editing the .htaccess.
 * Improved installation instructions
 
 == Upgrade notice ==
-Major upgrade, please backup your database and files before upgrading.
+Always back up before any upgrade: .htaccess, wp-config.php and the plugin folder. This way you can easily roll back.
 
 == Screenshots ==
 1. On the settings page, you can view your configuration, and sources of mixed content

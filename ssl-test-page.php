@@ -1,5 +1,7 @@
 <html>
-<head></head>
+<head>
+ <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+</head>
 <body>
 <h1>SSL test page</h1>
 <p>This page is used purely to test for ssl availability.</p>

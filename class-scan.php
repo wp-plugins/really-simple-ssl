@@ -40,7 +40,6 @@ public function insert_scan() {
 public function scan_callback() {
   global $wpdb;
   check_ajax_referer( 'rlrsssl-really-simple-ssl', 'security' );
-
   $files = new rlrsssl_files;
   $files->scan($this->search_array);
   $database = new rlrsssl_database;
@@ -53,64 +52,76 @@ public function scan_callback() {
   if ($this->mixed_content_detected) {
     ?>
     <tr>
-      <td><?php echo $this->mixed_content_detected ? $this->img_warning :$this->img_success;?></td>
+      <td><?php echo $this->img_warning;?></td>
       <td>
         <?php
-          if ($this->mixed_content_detected) {
               if ($this->autoreplace_insecure_links) {
                   $autoreplace = __("currently ACTIVE","rlrsssl-really-simple-ssl");
               } elseif(!$this->autoreplace_insecure_links) {
                   $autoreplace = __("currently NOT active","rlrsssl-really-simple-ssl");
               }
               echo sprintf(__('Auto replace script is necessary for your website (%s), because mixed content was detected in the following posts, files and options (for performance reasons the number of results is limited to 25 per type).','rlrsssl-really-simple-ssl'),$autoreplace);
-
-          } else {
-            _e("No mixed content was detected. You could try to run your site without using the auto replace of insecure links, but check carefully. ","rlrsssl-really-simple-ssl");
-          }
           ?>
       </td>
     </tr>
+    <?php
+  } else {
+?>
+	    <tr>
+      <td><?php echo $this->img_success;?></td>
+      <td>
+        <?php
+            _e("No mixed content was detected. You could try to run your site without using the auto replace of insecure links, but check carefully. ","rlrsssl-really-simple-ssl");
+          ?>
+      </td>
+    </tr>
+<?php
+
+  }
+  if ($this->mixed_content_detected) {
+    ?>
     <tr><td></td><td id="scan-results">
       <table class="wp-list-table widefat fixed striped pages">
     <?php
-  }
-  foreach ($database->postsWithHTTP as $name => $id) {
-    ?>
-    <tr><td><?php echo $name;?>&nbsp;|&nbsp;<a href="post.php?post=<?php echo $id;?>&action=edit"><?php _e('edit','rlrsssl-really-simple-ssl');?></a></td></tr>
-    <?php
-  }
-  foreach ($files->filesWithHTTP as $fName => $file) {
-    ?>
-    <tr><td>Theme file: <?php echo $files->get_path_to_themes($file);?></td></tr>
-    <?php
-  }
-  foreach ($database->optionsWithHTTP as $option) {
-    ?>
-    <tr><td>Option: <?php echo $option?></td></tr>
-    <?php
-  }?>
-  </table><!--end list of insecure posts and files-->
-  <?php
-  if ($this->mixed_content_detected) {
-    parse_str($_SERVER['QUERY_STRING'], $params);
-    ?>
-        <br>
-        <button id="rlrsssl_scan" class="button button-primary" onclick="document.location.reload();"><?php _e("Scan again","rlrsssl-really-simple-ssl");?></button>
-        <?php
-        /*
-        <button class="button button-primary" onclick="document.location.href='<?php printf('%1$s', '?'.http_build_query(array_merge($params, array('rlrsssl_fixposts'=>'1'))));?>'">
-          <?php _e("Fix posts","rlrsssl-really-simple-ssl"); ?>
-        </button>
-        */
-        ?>
-    <?php
-  }
 
-  ?>
-  </td>
-  </tr>
+    foreach ($database->postsWithHTTP as $name => $id) {
+      ?>
+      <tr><td><?php echo $name;?>&nbsp;|&nbsp;<a href="post.php?post=<?php echo $id;?>&action=edit"><?php _e('edit','rlrsssl-really-simple-ssl');?></a></td></tr>
+      <?php
+    }
+    foreach ($files->filesWithHTTP as $fName => $file) {
+      ?>
+      <tr><td>Theme file: <?php echo $files->get_path_to_themes($file);?></td></tr>
+      <?php
+    }
+    foreach ($database->optionsWithHTTP as $option) {
+      ?>
+      <tr><td>Option: <?php echo $option?></td></tr>
+      <?php
+    }?>
+    </table><!--end list of insecure posts and files-->
+    <?php
+    if ($this->mixed_content_detected) {
+      parse_str($_SERVER['QUERY_STRING'], $params);
+      ?>
+          <br>
+          <button id="rlrsssl_scan" class="button button-primary" onclick="document.location.reload();"><?php _e("Scan again","rlrsssl-really-simple-ssl");?></button>
+          <?php
+          /*
+          <button class="button button-primary" onclick="document.location.href='<?php printf('%1$s', '?'.http_build_query(array_merge($params, array('rlrsssl_fixposts'=>'1'))));?>'">
+            <?php _e("Fix posts","rlrsssl-really-simple-ssl"); ?>
+          </button>
+          */
+          ?>
+      <?php
+    }
+
+    ?>
+    </td>
+    </tr>
 
 <?php
+  }
   wp_die(); // this is required to terminate immediately and return a proper response
 }
 
