@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Really Simple SSL v2.1.0\n"
+"Project-Id-Version: Really Simple SSL v2.1.15\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2015-07-23 21:03:11+0000\n"
+"PO-Revision-Date: 2015-08-22 21:50:50+0000\n"
 "Last-Translator: rogier <rogierlankhorst@gmail.com>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -44,64 +44,50 @@ msgstr ""
 msgid "http://www.rogierlankhorst.com"
 msgstr ""
 
-#: rlrsssl-really-simple-ssl.php:893
+#: class-admin.php:1264
 #@ rlrsssl-really-simple-ssl
 msgid "Save"
 msgstr "Opslaan"
 
-#: rlrsssl-really-simple-ssl.php:989
+#: class-admin.php:1157
+#: class-admin.php:1375
+#: class-admin.php:1535
 #@ rlrsssl-really-simple-ssl
 msgid "Settings"
 msgstr "Instellingen"
 
-#: rlrsssl-really-simple-ssl.php:662
-#@ rlrsssl-really-simple-ssl
-msgid "View your detected setup"
-msgstr "Bekijk je gedetecteerde setup"
-
-#: rlrsssl-really-simple-ssl.php:792
-#: rlrsssl-really-simple-ssl.php:850
+#: class-admin.php:1093
 #@ rlrsssl-really-simple-ssl
 msgid "SSL settings"
 msgstr "SSL instellingen"
 
-#: rlrsssl-really-simple-ssl.php:793
+#: class-admin.php:1094
 #@ rlrsssl-really-simple-ssl
 msgid "SSL"
 msgstr "SSL"
 
-#: rlrsssl-really-simple-ssl.php:816
-#: rlrsssl-really-simple-ssl.php:856
+#: class-admin.php:1118
+#: class-admin.php:1196
 #@ rlrsssl-really-simple-ssl
 msgid "Detected setup"
 msgstr "Gedetecteerde setup"
 
-#: rlrsssl-really-simple-ssl.php:877
+#: class-admin.php:1222
 #@ rlrsssl-really-simple-ssl
 msgid "https redirect set in .htaccess"
 msgstr "Https redirect ingesteld in de .htaccess"
 
-#: rlrsssl-really-simple-ssl.php:877
-#@ rlrsssl-really-simple-ssl
-msgid "Https redirect was set in javascript, because .htaccess was not available or writable."
-msgstr "Https redirect ingesteld met javascript, omdat het .htaccess bestand niet beschikbaar of schrijfbaar is. "
-
-#: rlrsssl-really-simple-ssl.php:672
+#: class-admin.php:928
 #@ rlrsssl-really-simple-ssl
 msgid "SSl was detected and successfully activated!"
 msgstr "SSL werd gedetecteerd en succesvol geactiveerd!"
 
-#: rlrsssl-really-simple-ssl.php:862
+#: class-admin.php:1203
 #@ rlrsssl-really-simple-ssl
 msgid "No SSL detected."
 msgstr "Geen SSL gedetecteerd."
 
-#: rlrsssl-really-simple-ssl.php:866
-#@ rlrsssl-really-simple-ssl
-msgid "An SSL certificate appears to be active on your site. "
-msgstr "Het lijkt erop dat er een SSL certificaat  actief is op je site. "
-
-#: rlrsssl-really-simple-ssl.php:817
+#: class-admin.php:1119
 #@ rlrsssl-really-simple-ssl
 msgid "In the detected setup section you can see what we detected for your site.<br><br><b>SSL detection:</b> if it is possible to open a page on your site with https, it is assumed you have a valid ssl certificate. No guarantees can be given.<br><br><B>SSL redirect in .htaccess:</b> (Only show when ssl is detected) If possible, the redirect will take place in the .htaccess file. If this file is not available or not writable, javascript is used to enforce ssl."
 msgstr "In de gedetecteerde setup kan je zien wat we hebben gedetecteerd voor jouw site.<br><br><br><b>SSL detectie:</b>Als het mogelijk is om een pagina te openen via https, wordt aangenomen dat je een geldig ssl certificaat op je domein hebt. Er kunnen geen garanties gegeven worden. <br><br><b>SSL redirect in .htaccess:</b> (alleen als ssl is gedetecteerd). Indien mogelijk wordt de redirect naar https gedaan in het .htaccess bestand. Als dit bestand niet beschikbaar is, of niet schrijfbaar, wordt javascript gebruikt om de redirect te regelen. "
@@ -112,91 +98,225 @@ msgstr "In de gedetecteerde setup kan je zien wat we hebben gedetecteerd voor jo
 msgid "Lightweight plugin without any setup to make your site ssl proof"
 msgstr "Lichtgewicht plugin zonder setup om je site ssl proof te maken."
 
-#: rlrsssl-really-simple-ssl.php:828
+#: class-admin.php:1136
 #@ rlrsssl-really-simple-ssl
 msgid "How to get an SSL certificate"
 msgstr "Hoe kom je aan een SSL certificaat."
 
-#: rlrsssl-really-simple-ssl.php:829
+#: class-admin.php:1137
 #@ rlrsssl-really-simple-ssl
 msgid "To secure your site with ssl, you need an SSL certificate. How you can get a certificate depends on your hosting provider, but can often be requested on the control panel of your website. If you are not sure what to do, you can contact your hosting provider."
 msgstr "Voor het beveiligen van je site met ssl heb je een SSL certificaat nodig. Hoe je een ssl certificaat kan verkrijgen verschilt per hosting provider, maar kan vaak aangevraagd worden via de control panel van je website. Als je niet weet hoe het moet, neem even contact op met je provider. "
 
-#. translators: plugin header field 'Version'
-#: rlrsssl-really-simple-ssl.php:0
-#@ rlrsssl-really-simple-ssl
-msgid "2.1.0"
-msgstr ""
-
-#: rlrsssl-really-simple-ssl.php:659
+#: class-admin.php:914
 #@ rlrsssl-really-simple-ssl
 msgid "No SSL was detected. If you are just waiting for your ssl certificate to kick in you can dismiss this warning."
 msgstr "Er is geen SSL gedetecteerd. Als je gewoon nog wacht op je certificaat kan je deze melding wegklikken."
 
-#: rlrsssl-really-simple-ssl.php:822
-#: rlrsssl-really-simple-ssl.php:990
-#@ rlrsssl-really-simple-ssl
-msgid "Auto replace insecure links"
-msgstr "Automatisch onveilige links vervangen"
-
-#: rlrsssl-really-simple-ssl.php:1011
-#@ rlrsssl-really-simple-ssl
-msgid "By unchecking the 'auto replace insecure links' checkbox you can test if your site can run without this extra functionality. Uncheck, empty your cache when you use one, and go to the front end of your site. You should then check if you have mixed content errors, by clicking on the lock icon in the addres bar."
-msgstr "Door de 'auto replace onveilige links' checkbox uit te vinken kan je testen of je site functioneert zonder deze extra functionaliteit. Verwijder het vinkje, leeg je cache als je die gebruikt, en ga naar de front end van je website. Controleer dan of je nog mixed content foutmeldingen hebt door te klikken op het slot icoontje in de adres balk van je browser. "
-
-#: scan.php:27
+#: class-scan.php:37
+#: class-scan.php:38
 #@ rlrsssl-really-simple-ssl
 msgid "Scanning..."
 msgstr "Aan het scannen..."
 
-#: scan.php:61
-#@ rlrsssl-really-simple-ssl
-msgid "currently ACTIVE"
-msgstr "op dit moment ACTIEF"
-
-#: scan.php:63
-#@ rlrsssl-really-simple-ssl
-msgid "currently NOT active"
-msgstr "op dit moment NIET actief"
-
-#: scan.php:65
-#, php-format
-#@ rlrsssl-really-simple-ssl
-msgid "Auto replace script might be necessary for your website (%s), because mixed content was detected in the following posts, files and options."
-msgstr "Het autoreplace script zou nodig kunnen zijn voor je website (%s), omdat er mixed content is gedetecteerd in de volgende pagina's, bestanden en opties. "
-
-#: scan.php:68
-#@ rlrsssl-really-simple-ssl
-msgid "No mixed content was detected. You could try to run your site without using the auto replace of insecure links. "
-msgstr "Er is geen mixed content gedetecteerd. Je zou kunnen proberen je site te laten draaien zonder de auto replace van onveilige links functie. "
-
-#: scan.php:79
+#: class-scan.php:105
 #@ rlrsssl-really-simple-ssl
 msgid "edit"
 msgstr "wijzig"
 
-#: scan.php:98
+#: class-scan.php:123
 #@ rlrsssl-really-simple-ssl
 msgid "Scan again"
 msgstr "Nogmaals scannen"
 
-#: rlrsssl-really-simple-ssl.php:681
+#: class-admin.php:947
 #@ rlrsssl-really-simple-ssl
 msgid "We detected a definition of siteurl or homeurl in your wp-config.php, but the file is not writable. Because of this, we cannot set the siteurl to https."
 msgstr "We hebben een gedefinieerde siteurl of homeurl in je wp-config.php gedetecteerd, maar het bestand is niet schrijfbaar. Hierdoor kunnen we de siteurl niet naar https aanpassen."
 
-#: rlrsssl-really-simple-ssl.php:1070
-#@ rlrsssl-really-simple-ssl
-msgid "Are you sure? This could seriously break up your site! Backup before you go!"
-msgstr ""
-
-#: rlrsssl-really-simple-ssl.php:852
-#@ rlrsssl-really-simple-ssl
-msgid "On your SSL settings page you can view the detected setup of your system, and optimize accordingly. If no mixed content was found, you could try disabling the 'auto replace insecure links' option, and test if the front end runs without the mixed content error message (click on the lock in your browser address bar). This way you can prevent unnecessary replacement actions."
-msgstr "Op je SSL instellingen pagina kan je de gedetecteerde setup van je systeem bekijken, en deze optimaliseren. Als er geen mixed content is gevonden kan je proberen de automatisch onveilige links vervangen optie uitschakelen, en testen of je front end zonder problemen draait. Klik hiervoor op het slotje in je browser adresbalk van je website. Je kan op deze manier onnodige vervang acties voorkomen."
-
-#: rlrsssl-really-simple-ssl.php:823
+#: class-admin.php:1125
 #@ rlrsssl-really-simple-ssl
 msgid "In most sites, a lot of links are saved into the content, pluginoptions or even worse, in the theme. When you switch to ssl , these are still http, instead of https. To ensure a smooth transition, this plugin auto replaces all these links. If you see in the scan results that you have fixed most of these links, you can try to run your site without this replace script, which will give you a small performance advantage. If you do not have a lot of reported insecure links, you can try this. If you encounter mixed content warnings, just switch it back on. <br><br><b>How to check for mixed content?</b><br>Go to the the front end of your website, and click on the lock in your browser's address bar. When you have mixed content, this lock is not closed, or has a red cross over it."
 msgstr "In de meeste sites worden een hoop links opgeslagen in de inhoud, pluginopties, of nog erger in de themabestanden. Als je overgaat naar ssl zijn deze nog steeds http in plaats van https. Voor een soepele transitie vervangt deze plugin automatisch deze links. Als je in de scan resultaten ziet dat je de meeste van deze links al hebt aangepast kan je proberen de site te laten draaien zonder het vervang script (automatisch onveilige links vervangen uitschakelen). Dit geeft een klein performance voordeel. Als je weinig insecure links hebt kan je dit proberen. Als je mixed content meldingen krijgt kan je de optie weer inschakelen. "
+
+#: class-admin.php:1209
+#@ rlrsssl-really-simple-ssl
+msgid "An SSL certificate was detected on your site. "
+msgstr "Er is een SSL certificaat gedetecteerd op je site. "
+
+#: class-admin.php:1226
+#@ rlrsssl-really-simple-ssl
+msgid "Https redirect was set in javascript, because .htaccess was not available or writable, or the ssl configuration was not recognized."
+msgstr "Https redirect is ingesteld in javascript, omdat de .htaccess niet beschikbaar of schrijfbaar was, of omdat de ssl configuratie niet herkend werd. "
+
+#: class-scan.php:87
+#@ rlrsssl-really-simple-ssl
+msgid "No mixed content was detected. You could try to run your site without using the auto replace of insecure links, but check carefully. "
+msgstr "Er is geen mixed content gedetecteerd. Ja kan proberen je site te laten draaien zonder de auto replace functie, maar controleer het resultaat zorgvuldig. "
+
+#: class-admin.php:917
+#@ rlrsssl-really-simple-ssl
+msgid "I'm sure I have an active SSL certificate, force it!"
+msgstr "Ik weet zeker dat ik een SSL certificaat heb, forceer maar!"
+
+#: class-admin.php:919
+#@ rlrsssl-really-simple-ssl
+msgid "Scan SSL setup again"
+msgstr "Nogmaal ssl configuratie scannen"
+
+#: class-admin.php:1130
+#@ rlrsssl-really-simple-ssl
+msgid "HTTP Strict Transport Security (HSTS)"
+msgstr ""
+
+#: class-admin.php:1131
+#@ rlrsssl-really-simple-ssl
+msgid "Using this option will prevent users from visiting your website over http for one year, so use this option with caution! HTTP Strict Transport Security (HSTS) is an opt-in security enhancement that is specified by a web application through the use of a special response header. Once a supported browser receives this header that browser will prevent any communications from being sent over HTTP to the specified domain and will instead send all communications over HTTPS. It also prevents HTTPS click through prompts on browsers. "
+msgstr "Het gebruik van deze optie voorkomt een jaar lang dat gebruikers je website via http kunnen bereiken, dus gebruik deze optie voorzichtig!.  HTTP Strict Transport Security (HSTS) is an opt-in security enhancement that is specified by a web application through the use of a special response header. Once a supported browser receives this header that browser will prevent any communications from being sent over HTTP to the specified domain and will instead send all communications over HTTPS. It also prevents HTTPS click through prompts on browsers. "
+
+#: class-admin.php:1142
+#: class-admin.php:1387
+#@ rlrsssl-really-simple-ssl
+msgid "Force SSL without detection"
+msgstr "Forceer SSL zonder detectie"
+
+#: class-admin.php:1143
+#@ rlrsssl-really-simple-ssl
+msgid "This plugin tries to open a page within the plugin directory over https. If that fails, it is assumed that ssl is not availble. But as this may not cover all eventualities, it is possible to force the site over ssl anyway.<br><br> If you force your site over ssl without a valid ssl certificate, your site may break. In that case, remove the 'really simple ssl' rules from your .htaccess file (if present), and remove or rename the really simple ssl plugin."
+msgstr "De plugin probeert een pagina via https te openen binnen de plugin directory. Als dat niet lukt, wordt er aangenomen dat ssl niet beschikbaar is. Omdat niet alle situaties kunnen worden voorzien, is het mogelijk om je site over https te forceren.<BR><br>Als je geen ssl certificaat hebt kan dit je site breken! In dat geval, volg de uninstall instructies op de plugin pagina. "
+
+#: class-admin.php:1205
+#@ rlrsssl-really-simple-ssl
+msgid "No SSL detected, but SSL is forced."
+msgstr "Geen ssl gedetecteerd, maar SSL is geforceerd. "
+
+#: class-admin.php:1224
+#@ rlrsssl-really-simple-ssl
+msgid "Https redirect was set in javascript, because the proposed redirect for the htaccess would result in a redirect loop. I'd like to know if this happens: info@rogierlankhorst.com"
+msgstr "Https redirect werd ingesteld met javascript, omdat de voorgestelde redirect voor het .htaccess bestand resulteerde in een redirect loop. Ik hoor het graag als dit gebeurd: info@rogierlankhorst.com"
+
+#: class-admin.php:1239
+#@ rlrsssl-really-simple-ssl
+msgid "HTTP Strict Transport Security was set in the .htaccess"
+msgstr "HTTP Strict Transport Security werd in .htaccess ingesteld. "
+
+#: class-admin.php:1241
+#@ rlrsssl-really-simple-ssl
+msgid "HTTP Strict Transport Security was not set in your .htaccess. Do this only if your setup is fully working, and only when you do not plan to revert to http."
+msgstr "HTTP Strict Transport Security is niet ingesteld in je .htaccess. Doe dit alleen als je systeem volledig werkt, en alleen als je niet terug wilt naar http. "
+
+#: class-admin.php:1382
+#@ rlrsssl-really-simple-ssl
+msgid "Turn HTTP Strict Transport Security on"
+msgstr "Zet HTTP Strict Transport Security aan. "
+
+#: class-admin.php:1157
+#: class-admin.php:1390
+#@ rlrsssl-really-simple-ssl
+msgid "Debug"
+msgstr "Debug"
+
+#: class-admin.php:1409
+#@ rlrsssl-really-simple-ssl
+msgid "The force ssl without detection option can be used when the ssl was not detected, but you are sure you have ssl."
+msgstr "De forceer ssl zonder detectie optie kan gebruikt worden als er geen ssl werd gedetecteerd, maar als je er zeker van bent dat je ssl hebt."
+
+#: class-admin.php:1495
+#@ rlrsssl-really-simple-ssl
+msgid "Are you sure? Your visitors will keep going to a https site for a year after you turn this off."
+msgstr "Zeker? Je bezoekers zullen naar een https worden gestuurd gedurende een jaar nadat je dit hebt uitgezet. "
+
+#: class-admin.php:1509
+#@ rlrsssl-really-simple-ssl
+msgid "Are you sure you have an SSL certifcate? Forcing ssl on a non-ssl site can break your site."
+msgstr "Weet je zeker dat je een SSL certificaat hebt? Het forceren van ssl op een niet-ssl site kan je site breken."
+
+#: class-admin.php:955
+#@ rlrsssl-really-simple-ssl
+msgid "Because your site is behind a loadbalancer and is_ssl() returns false, you should add the following line of code to your wp-config.php. Your wp-config.php could not be written automatically."
+msgstr "Omdat je site achter een loadbalancer zit en is_ssl() FALSE retourneert, moet je de volgende code toevoegen aan je wp-config.php. Je wp-config.php kon niet automatisch worden geschreven. "
+
+#: class-admin.php:1157
+#@ rlrsssl-really-simple-ssl
+msgid "Configuration"
+msgstr "Configuratie"
+
+#: class-admin.php:1157
+#@ rlrsssl-really-simple-ssl
+msgid "Detected mixed content"
+msgstr "Gedetecteerde mixed content"
+
+#: class-admin.php:1244
+#: class-scan.php:79
+#: class-scan.php:88
+#@ rlrsssl-really-simple-ssl
+msgid "Manage settings"
+msgstr "Beheer instellingen"
+
+#: class-scan.php:82
+#@ rlrsssl-really-simple-ssl
+msgid "In the tab \"detected mixed content\" you can find a list of items with mixed content."
+msgstr "In the tab \"gedetecteerde mixed content\" kan je een lijst met mixed content items vinden."
+
+#: class-scan.php:96
+#, php-format
+#@ rlrsssl-really-simple-ssl
+msgid "The scan searched for the following insecure links: %s"
+msgstr "De scan heeft gezocht naar de volgende onveilige links: %s"
+
+#. translators: plugin header field 'Version'
+#: rlrsssl-really-simple-ssl.php:0
+#@ rlrsssl-really-simple-ssl
+msgid "2.1.15"
+msgstr ""
+
+#: class-scan.php:76
+#@ rlrsssl-really-simple-ssl
+msgid "Mixed content detected "
+msgstr "Mixed content gedetecteerd "
+
+#: class-admin.php:1378
+#@ rlrsssl-really-simple-ssl
+msgid "Auto replace mixed content"
+msgstr ""
+
+#: class-scan.php:77
+#@ rlrsssl-really-simple-ssl
+msgid "and the mixed content fix is active."
+msgstr "en de mixed content fix is actief. "
+
+#: class-scan.php:77
+#@ rlrsssl-really-simple-ssl
+msgid "but the mixed content fix is not active."
+msgstr "maar de mixed content fix is niet actief."
+
+#: class-admin.php:1407
+#@ rlrsssl-really-simple-ssl
+msgid "By unchecking the 'auto replace mixed content' checkbox you can test if your site can run without this extra functionality. Uncheck, empty your cache when you use one, and go to the front end of your site. You should then check if you have mixed content errors, by clicking on the lock icon in the addres bar."
+msgstr "Door de 'auto replace mixed content' checkbox uit te vinken kan je testen of je site functioneert zonder deze extra functionaliteit. Verwijder het vinkje, leeg je cache als je die gebruikt, en ga naar de front end van je website. Controleer dan of je nog mixed content foutmeldingen hebt door te klikken op het slot icoontje in de adresbalk van je browser. \t"
+
+#: class-scan.php:98
+#@ rlrsssl-really-simple-ssl
+msgid "List of detected items with mixed content"
+msgstr "Lijst van items waarin mixed content gedetecteerd is."
+
+#: class-admin.php:936
+#@ rlrsssl-really-simple-ssl
+msgid "Really Simple SSL has a conflict with another plugin."
+msgstr "Really Simple SSL heeft een conflict met een andere plugin."
+
+#: class-admin.php:937
+#@ rlrsssl-really-simple-ssl
+msgid "The force rewrite titles option in Yoast SEO prevents Really Simple SSL plugin from fixing mixed content."
+msgstr "De force rewrite titles optie in Yoast SEO zorgt ervoor dat Really Simple SSL geen mixed content kan vervangen. "
+
+#: class-admin.php:938
+#@ rlrsssl-really-simple-ssl
+msgid "Show me this setting"
+msgstr "Laat me deze instelling zien. "
+
+#: class-admin.php:1124
+#@ rlrsssl-really-simple-ssl
+msgid "Mixed content fixer"
+msgstr ""
 
