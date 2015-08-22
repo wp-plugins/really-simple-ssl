@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.3
-Stable tag: 2.1.14
+Stable tag: 2.1.15
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -65,10 +65,14 @@ For more information: go to the [website](http://www.rogierlankhorst.com/really-
 [contact](http://www.rogierlankhorst.com/really-simple-ssl-contact-form/) me if you have any questions or suggestions.
 
 == Frequently Asked Questions ==
-= I installed this plugin, but I still have mixec content warning. How to fix? =
+= I installed this plugin, some parts of my site aren't loading =
+* Your site possibly includes external resources which cannot load over https. Use "inspect element" on your website to see what links are causing this.
+Resources that cannot be loaded over https cannot be included on a SSL website.
+
+= I installed this plugin, some parts of my site aren't loading =
 * Clear the cache of your wordpress site, if you use a caching plugin.
-* If that doesn't work, your site probably includes external resources. Use "inspect element" on your website to see what links are causing this (you can ignore hyperlinks).
-And add them to the replace array with the "replace_url_args" filter explained below.
+* Clear the cache of your browser
+* Your site possibly includes external resources that were not replaced. Use "inspect element" on your website to see what links are causing this (you can ignore hyperlinks).
 
 = Is it possible to exclude certain urls from the ssl redirect? =
 * That is not possible. This plugin simply forces your complete site over https, which keeps it lightweight.
@@ -98,13 +102,7 @@ add_filter("rlrsssl_replace_url_args","my_custom_http_urls");
 
 Needless to say, these urls should be available over ssl, otherwise it won’t work…
 
-= How to uninstall when website/backend is not accessible/has a redirect loop? =
-* Almost certainly it is the redirect in the .htaccess that is causing the trouble. If that is the case follow these steps:
-1. Add to your wp-config.php:
-   define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , TRUE );
-2. Remove the .htaccess rewrite rules from your .htaccess
-
-If you still have issues and want to deactivate, follow these steps:
+= How to uninstall when website/backend is not accessible =
 
 1. Remove the plug-in rules from the .htaccess file
 
@@ -120,6 +118,8 @@ If you use defines in your wp-config.php or functions.php for your urls, change 
 
 4. Check if your wp-config.php was edited, if so, remove the really simple ssl lines.
 
+5. Clear your browser history, or use a different browser.
+
 = Is the plugin suitable for wordpress multisite? =
 * Yes, it works on multisite, both with domain mapping and with subdomains. The plugin should be activated for all sites though. If you want
 to activate per site, you have to prevent the plugin from editing the .htaccess. Editing the .htaccess on a per site basis is on my to do list.
@@ -131,8 +131,14 @@ to activate per site, you have to prevent the plugin from editing the .htaccess.
 * Yes, every request to your domain gets redirected to https.
 
 == Changelog ==
+= 2.1.15 =
+* Improved user interface with tabs
+* Changed function to test ssl test page from file_get_contents to curl, as this improves response time, which might prevent "no ssl messages"
+* Extended the mixed content fixer to replace src="http:// links, as these should always be https on an ssl site.
+* Added an errormessage in case of force rewrite titles in Yoast SEO plugin is used, as this prevents the plugin from fixing mixed content
+
 = 2.1.14 =
-* Added support for loadbalancer without a set https server variable: in that case a wp-config fix is needed.
+* Added support for loadbalancer and is_ssl() returning false: in that case a wp-config fix is needed.
 * Improved performance
 * Added debuggin option, so a trace log can be viewed
 * Fixed a bug where the rlrsssl_replace_url_args filter was not applied correctly.
@@ -207,5 +213,6 @@ to activate per site, you have to prevent the plugin from editing the .htaccess.
 Always back up before any upgrade: .htaccess, wp-config.php and the plugin folder. This way you can easily roll back.
 
 == Screenshots ==
-1. On the settings page, you can view your configuration, and sources of mixed content
-2. For a slight performance gain, you can toggle off the auto replace insecure content when you do not have insecure content on your site.
+1. After activation, your ssl will be detected if present
+2. View your configuration on the settings page
+3. Check if your site has mixed content. If you want you can just leave it that way, because of the built in mixed content fixer.

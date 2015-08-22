@@ -49,8 +49,6 @@ defined('ABSPATH') or die("you do not have acces to this page!");
                     $file   = $path.'/'.$file;
 
                     if(is_file($file) && strpos($fName, ".php")!==false) {
-
-                      //array_push($this->fileArray, $file);
                       $this->fileArray[$fName] = $file;
                     } elseif (is_dir($file)) {
                       $this->get_filelist_from_dir($file);

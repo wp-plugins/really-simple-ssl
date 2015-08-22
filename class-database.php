@@ -20,6 +20,7 @@ class rlrsssl_database {
       $arr = $this->search_array;
       $i = 0;
       foreach ($arr as $needle) {
+        $needle = addslashes($needle);
         $i++;
         $where.= sprintf(' %1$s.post_content ',$wpdb->posts);
         $where.= " LIKE '%{$needle}%'";
@@ -75,6 +76,7 @@ class rlrsssl_database {
         $arr = $this->search_array;
         $i = 0;
         foreach ($arr as $needle) {
+          $needle = addslashes($needle);
           $i++;
           $where.= sprintf(' %1$s.option_value ',$wpdb->options);
           $where.= " LIKE '%{$needle}%'";

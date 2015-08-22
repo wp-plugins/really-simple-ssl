@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.1.14
+ * Version: 2.1.15
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -80,6 +80,7 @@ class rlrsssl_really_simple_ssl extends rlrsssl_admin_layer {
           $this->check_for_ssl();
     			add_action('plugins_loaded',array($this,'configure_ssl'),20);
     		}
+        add_action('plugins_loaded',array($this,'check_plugin_conflicts'),30);
 
       	//add the settings page for the plugin
       	add_action('admin_menu',array($this,'setup_admin_page'),30);
@@ -126,8 +127,10 @@ class rlrsssl_really_simple_ssl extends rlrsssl_admin_layer {
     $this->http_urls = array(
         str_replace ( "https://" , "http://" , $home_yes_www),
         str_replace ( "https://" , "http://" , $home_no_www),
-        "http://www.youtube", //Embed Video Fix
-        "http://ajax.googleapis.com/ajax",
+        //"http://www.youtube", //do not include anymore, is fixed by lines below
+        "src='http://",
+        'src="http://',
+        "src=http://",
     );
   }
 
@@ -154,9 +157,8 @@ class rlrsssl_really_simple_ssl extends rlrsssl_admin_layer {
     }
   }
 
-
   /**
-   * Just before the page is sent to the visitor's browser, alle homeurl links are replaced with https.
+   * Just before the page is sent to the visitor's browser, all homeurl links are replaced with https.
    *
    * @since  1.0
    *
@@ -174,8 +176,8 @@ class rlrsssl_really_simple_ssl extends rlrsssl_admin_layer {
   /**
    * Just before the page is sent to the visitor's browser, all homeurl links are replaced with https.
    *
-   * filters: rlrsssl_replace_url_args (rlrsssl_replacewith_url_args,  is deprecated)
-   * These filter allows for extending the range of urls that are replaced with https.
+   * filter: rlrsssl_replace_url_args
+   * This filter allows for extending the range of urls that are replaced with https.
    *
    * @since  1.0
    *
@@ -185,13 +187,11 @@ class rlrsssl_really_simple_ssl extends rlrsssl_admin_layer {
 
   public function end_buffer_capture($buffer) {
     $search_array = apply_filters('rlrsssl_replace_url_args', $this->http_urls);
-	  $ssl_array = str_replace ( "http://" , "https://" , $search_array);
+	  $ssl_array = str_replace ( "http://" , "https://", $search_array);
     //now replace these links
     $buffer = str_replace ($search_array , $ssl_array , $buffer);
     return $buffer;
   }
-
-
 
   /**
    * Adds some javascript to redirect to https.

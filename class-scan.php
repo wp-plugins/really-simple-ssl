@@ -9,28 +9,49 @@ class rlrsssl_scan {
   private $mixed_content_detected;
   private $autoreplace_insecure_links;
 
-public function set_images($success,$error,$warning) {
-  $this->img_warning = $warning;
-  $this->img_success = $success;
-  $this->img_error   = $error;
-}
+  public function __construct()
+  {
+    $this->load_translation();
+  }
 
-public function init($search_array, $autoreplace){
-  $this->search_array               = $search_array;
-  $this->autoreplace_insecure_links = $autoreplace;
-}
+  public function load_translation()
+  {
+      load_plugin_textdomain('rlrsssl-really-simple-ssl', FALSE, dirname(plugin_basename(__FILE__)).'/lang/');
+  }
+
+  public function set_images($success,$error,$warning) {
+    $this->img_warning = $warning;
+    $this->img_success = $success;
+    $this->img_error   = $error;
+  }
+
+  public function init($search_array, $autoreplace){
+    $this->search_array               = $search_array;
+    $this->autoreplace_insecure_links = $autoreplace;
+  }
 public function insert_scan() {
   $ajax_nonce = wp_create_nonce( "rlrsssl-really-simple-ssl" );
   ?>
   <script type='text/javascript'>
     jQuery(document).ready(function($) {
-        $('#scan-results tr:last').after('<tr id="loader"><td></td><td><div class="loader"><?php _e("Scanning...", "rlrsssl-really-simple-ssl");?></div></td></tr>');
-        var data = {
+        $('#scan-result tr:last').after('<tr id="loader_result"><td></td><td><div class="loader"><?php _e("Scanning...", "rlrsssl-really-simple-ssl");?></div></td></tr>');
+        $('#scan-list tr:last').after('<tr id="loader_list"><td></td><td><div class="loader"><?php _e("Scanning...", "rlrsssl-really-simple-ssl");?></div></td></tr>');
+
+          var data = {
           'action': 'scan',
           'security': '<?php echo $ajax_nonce; ?>',
         };
         $.post(ajaxurl, data, function(response) {
-            $('#loader').replaceWith(response);
+            var obj;
+            if (!response) {
+              htmlresult="<tr><td></td><td>Scan not completed, please scan again</td></tr>";
+              htmllist = "<tr><td></td><td>Scan not completed, please scan again</td></tr>";
+            }
+            else {
+             obj = jQuery.parseJSON( response );
+             $('#loader_result').replaceWith(obj['htmlresult']);
+             $('#loader_list').replaceWith(obj['htmllist']);
+            }
         });
     });
   </script>
@@ -50,79 +71,77 @@ public function scan_callback() {
   }
 
   if ($this->mixed_content_detected) {
-    ?>
-    <tr>
-      <td><?php echo $this->img_warning;?></td>
-      <td>
-        <?php
-              if ($this->autoreplace_insecure_links) {
-                  $autoreplace = __("currently ACTIVE","rlrsssl-really-simple-ssl");
-              } elseif(!$this->autoreplace_insecure_links) {
-                  $autoreplace = __("currently NOT active","rlrsssl-really-simple-ssl");
-              }
-              echo sprintf(__('Auto replace script is necessary for your website (%s), because mixed content was detected in the following posts, files and options (for performance reasons the number of results is limited to 25 per type).','rlrsssl-really-simple-ssl'),$autoreplace);
-          ?>
-      </td>
-    </tr>
-    <?php
+    $result_html  = "<tr><td>";
+    $result_html .= $this->autoreplace_insecure_links ? $this->img_success :$this->img_warning;
+    $result_html .= "</td><td>".__('Mixed content detected ','rlrsssl-really-simple-ssl');
+    $result_html .= $this->autoreplace_insecure_links ? __("and the mixed content fix is active.","rlrsssl-really-simple-ssl") : __("but the mixed content fix is not active.","rlrsssl-really-simple-ssl");
+    $result_html .= "</td>";
+    $result_html .= "<td><a href='?page=rlrsssl_really_simple_ssl&tab=settings'>".__("Manage settings","rlrsssl-really-simple-ssl")."</a></td></td></tr>";
+    //next row
+    $result_html .= "<tr><td></td>";//with extra column for warning images
+    $result_html .= "<td>".__('In the tab "detected mixed content" you can find a list of items with mixed content.','rlrsssl-really-simple-ssl')."</td>";
+    $result_html .= "<td></td></tr>";
   } else {
-?>
-	    <tr>
-      <td><?php echo $this->img_success;?></td>
-      <td>
-        <?php
-            _e("No mixed content was detected. You could try to run your site without using the auto replace of insecure links, but check carefully. ","rlrsssl-really-simple-ssl");
-          ?>
-      </td>
-    </tr>
-<?php
-
+    $result_html .= "<tr>";
+    $result_html .= "<td>".$this->img_success."</td>";
+    $result_html .= "<td>".__("No mixed content was detected. You could try to run your site without using the auto replace of insecure links, but check carefully. ","rlrsssl-really-simple-ssl")."</td>";
+    $result_html .= "<td><a href='?page=rlrsssl_really_simple_ssl&tab=settings'>".__("Manage settings","rlrsssl-really-simple-ssl")."</a></td></tr>";
   }
+
   if ($this->mixed_content_detected) {
-    ?>
-    <tr><td></td><td id="scan-results">
-      <table class="wp-list-table widefat fixed striped pages">
-    <?php
+    $search_strings = "<br>";
+    foreach($this->search_array as $search_string) {
+      $search_strings .= "&nbsp;&nbsp;-&nbsp;".$search_string."<br>";
+    }
+    $search_strings = sprintf(__('The scan searched for the following insecure links: %s','rlrsssl-really-simple-ssl'),$search_strings);
+
+    $list_html  = "<tr><td colspan='2'><h2>".__('List of detected items with mixed content','rlrsssl-really-simple-ssl')."</h2></td></tr>";
+    $list_html .= "<tr><td></td><td><p>".$search_strings."</p></td></tr>";
+    $list_html .= "<tr><td></td><td id='scan-results'>";
+    $list_html .= "<table class='wp-list-table widefat fixed striped pages'>";
 
     foreach ($database->postsWithHTTP as $name => $id) {
-      ?>
-      <tr><td><?php echo $name;?>&nbsp;|&nbsp;<a href="post.php?post=<?php echo $id;?>&action=edit"><?php _e('edit','rlrsssl-really-simple-ssl');?></a></td></tr>
-      <?php
+      $list_html .= "<tr><td>".$name."&nbsp;|&nbsp;<a href='post.php?post=".$id."&action=edit'>";
+      $list_html .= __('edit','rlrsssl-really-simple-ssl');
+      $list_html .= "</a></td></tr>";
     }
+
     foreach ($files->filesWithHTTP as $fName => $file) {
-      ?>
-      <tr><td>Theme file: <?php echo $files->get_path_to_themes($file);?></td></tr>
-      <?php
+      $list_html .= "<tr><td>Theme file: ".$files->get_path_to_themes($file)."</td></tr>";
     }
+
     foreach ($database->optionsWithHTTP as $option) {
-      ?>
-      <tr><td>Option: <?php echo $option?></td></tr>
-      <?php
-    }?>
-    </table><!--end list of insecure posts and files-->
-    <?php
+      $list_html .= "<tr><td>Option: ".$option."</td></tr>";
+    }
+
+    $list_html .= "</table>";
+
     if ($this->mixed_content_detected) {
       parse_str($_SERVER['QUERY_STRING'], $params);
-      ?>
-          <br>
-          <button id="rlrsssl_scan" class="button button-primary" onclick="document.location.reload();"><?php _e("Scan again","rlrsssl-really-simple-ssl");?></button>
-          <?php
+          $list_html .= "<br>";
+          $list_html .= "<button id='rlrsssl_scan' class='button button-primary' onclick='document.location.reload();'>";
+          $list_html .= __("Scan again","rlrsssl-really-simple-ssl");
+          $list_html .= "</button>";
+
           /*
           <button class="button button-primary" onclick="document.location.href='<?php printf('%1$s', '?'.http_build_query(array_merge($params, array('rlrsssl_fixposts'=>'1'))));?>'">
             <?php _e("Fix posts","rlrsssl-really-simple-ssl"); ?>
           </button>
           */
-          ?>
-      <?php
     }
 
-    ?>
-    </td>
-    </tr>
-
-<?php
+    $list_html .= "</td></tr>";
   }
-  wp_die(); // this is required to terminate immediately and return a proper response
-}
 
+  //now, create json object
+
+    $obj = new stdClass();
+    $obj = array(
+      'htmlresult' => $result_html,
+      'htmllist'=> $list_html
+    );
+
+    echo json_encode($obj);
+    wp_die(); // this is required to terminate immediately and return a proper response
+  }
 }
