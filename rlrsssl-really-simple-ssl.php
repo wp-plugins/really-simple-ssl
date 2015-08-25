@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.1.15
+ * Version: 2.1.16
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -127,7 +127,6 @@ class rlrsssl_really_simple_ssl extends rlrsssl_admin_layer {
     $this->http_urls = array(
         str_replace ( "https://" , "http://" , $home_yes_www),
         str_replace ( "https://" , "http://" , $home_no_www),
-        //"http://www.youtube", //do not include anymore, is fixed by lines below
         "src='http://",
         'src="http://',
         "src=http://",

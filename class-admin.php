@@ -19,6 +19,8 @@ defined('ABSPATH') or die("you do not have acces to this page!");
      $plugin_url,
      $plugin_version,
      $error_number                      = 0,
+     $curl_installed                    = FALSE,
+     $ssl_test_page_error,
      $htaccess_test_success             = FALSE,
      $main_plugin_filename,
 	   $debug							                = TRUE,
@@ -49,15 +51,15 @@ defined('ABSPATH') or die("you do not have acces to this page!");
 
     $options = get_option('rlrsssl_options');
     if (isset($options)) {
-      $this->hsts = isset($options['hsts']) ? $options['hsts'] : FALSE;
-      $this->ssl_fail_message_shown = isset($options['ssl_fail_message_shown']) ? $options['ssl_fail_message_shown'] : FALSE;
-      $this->ssl_success_message_shown = isset($options['ssl_success_message_shown']) ? $options['ssl_success_message_shown'] : FALSE;
-      $this->plugin_db_version = isset($options['plugin_db_version']) ? $options['plugin_db_version'] : "1.0";
-      $this->wpconfig_issue = isset($options['wpconfig_issue']) ? $options['wpconfig_issue'] : FALSE;
+      $this->hsts                       = isset($options['hsts']) ? $options['hsts'] : FALSE;
+      $this->ssl_fail_message_shown     = isset($options['ssl_fail_message_shown']) ? $options['ssl_fail_message_shown'] : FALSE;
+      $this->ssl_success_message_shown  = isset($options['ssl_success_message_shown']) ? $options['ssl_success_message_shown'] : FALSE;
+      $this->plugin_db_version          = isset($options['plugin_db_version']) ? $options['plugin_db_version'] : "1.0";
+      $this->wpconfig_issue             = isset($options['wpconfig_issue']) ? $options['wpconfig_issue'] : FALSE;
       $this->wpconfig_loadbalancer_fix_failed = isset($options['wpconfig_loadbalancer_fix_failed']) ? $options['wpconfig_loadbalancer_fix_failed'] : FALSE;
-      $this->set_rewriterule_per_site  = isset($options['set_rewriterule_per_site']) ? $options['set_rewriterule_per_site'] : FALSE;
-      $this->debug  = isset($options['debug']) ? $options['debug'] : FALSE;
-      $this->debug_log  = isset($options['debug_log']) ? $options['debug_log'] : "";
+      $this->set_rewriterule_per_site   = isset($options['set_rewriterule_per_site']) ? $options['set_rewriterule_per_site'] : FALSE;
+      $this->debug                      = isset($options['debug']) ? $options['debug'] : FALSE;
+      $this->debug_log                  = isset($options['debug_log']) ? $options['debug_log'] : "";
     }
     if ($this->debug) {
       //earliest moment of logging, so clear log
@@ -170,11 +172,11 @@ defined('ABSPATH') or die("you do not have acces to this page!");
 
   public function start_scan(){
     //set up scanning
-    //No need for scanning if no ssl certificate was detected
-    //if ($this->site_has_ssl || $this->force_ssl_without_detection) {
+    //No need for scanning if no ssl was detected
+    if ($this->site_has_ssl || $this->force_ssl_without_detection) {
       $this->scan = new rlrsssl_scan;
       $this->scan->init($this->http_urls, $this->autoreplace_insecure_links);
-      //$this->scan->init(array('src=""http://',"src=''http://"), $this->autoreplace_insecure_links);
+
       $this->scan->set_images(
               $this->img("success"),
               $this->img("error"),
@@ -182,7 +184,7 @@ defined('ABSPATH') or die("you do not have acces to this page!");
       );
 
      add_action( 'wp_ajax_scan', array($this->scan,'scan_callback'));
-    //}
+    }
   }
 
   /**
@@ -200,19 +202,27 @@ defined('ABSPATH') or die("you do not have acces to this page!");
       if (!current_user_can($this->capability)) return;
 
     	if ($this->debug) {
-          $this->trace_log("starting ssl configure, settings:");
           $ssl = $this->site_has_ssl ? "TRUE" : "FALSE";
-          $this->trace_log("-> ssl detected: ".$ssl);
+          $this->trace_log("--- ssl detected: ".$ssl);
           $force_ssl_without_detection = $this->force_ssl_without_detection ? "TRUE" : "FALSE";
-          $this->trace_log("-> force ssl: ".$force_ssl_without_detection);
-          $this->trace_log("-> ssl type: ".$this->ssl_type);
-          if ($this->do_wpconfig_loadbalancer_fix) {
-            $this->trace_log("Loadbalancer, but is_ssl() returns false, so doing wp-config fix...");
-          } elseif ($this->ssl_type=="LOADBALANCER"){
-            $this->trace_log("Loadbalancer detected, but is_ssl returns true, so no wp-config fix needed.");
+          $this->trace_log("--- force ssl: ".$force_ssl_without_detection);
+
+          if ($this->site_has_ssl || $this->force_ssl_without_detection) {
+            $this->trace_log("Starting ssl configuration");
           } else {
-            $this->trace_log("No loadbalancer detected, so no wp-config fix needed.");
-        }
+            $this->trace_log("No ssl detected and not forced, stopping configuration");
+          }
+
+
+          if ($this->site_has_ssl || $this->force_ssl_without_detection) {
+            if ($this->do_wpconfig_loadbalancer_fix) {
+              $this->trace_log("Loadbalancer, but is_ssl() returns false, so doing wp-config fix...");
+            } elseif ($this->ssl_type=="LOADBALANCER"){
+              $this->trace_log("Loadbalancer detected, but is_ssl returns true, so no wp-config fix needed.");
+            } else {
+              $this->trace_log("No loadbalancer detected, so no wp-config fix needed.");
+            }
+          }
       }
 
       //if ssl, edit htaccess to redirect to https if possible, and change the siteurl
@@ -270,6 +280,7 @@ defined('ABSPATH') or die("you do not have acces to this page!");
       $plugin_folder = get_plugins( '/' . plugin_basename( dirname( __FILE__ ) ) );
       $plugin_file = basename( ( $this->main_plugin_filename ) );
       $this->plugin_version = $plugin_folder[$plugin_file]['Version'];
+      if ($this->debug) {$this->trace_log("plugin version: ".$this->plugin_version);}
   }
 
   /**
@@ -508,6 +519,40 @@ defined('ABSPATH') or die("you do not have acces to this page!");
 
   }
 
+  public function is_curl_installed() {
+  	if  (in_array  ('curl', get_loaded_extensions())) {
+  		return true;
+  	}
+  	else {
+      if ($this->debug) {$this->trace_log("curl not installed on this server...");}
+  		return false;
+  	}
+  }
+
+
+  /**
+   * Checks if we are currently on ssl protocol, but extends standard wp with loadbalancer check.
+   *
+   * @since  2.0
+   *
+   * @access public
+   *
+   */
+
+  public function is_ssl_extended(){
+    if(!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https' || !empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] == 'on') {
+      $loadbalancer = TRUE;
+    }
+    else {
+      $loadbalancer = FALSE;
+    }
+
+    if (is_ssl() || $loadbalancer){
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   /**
    * Handles any errors as the result of trying to open a https page when there may be no ssl.
@@ -521,6 +566,38 @@ defined('ABSPATH') or die("you do not have acces to this page!");
   public function custom_error_handling($errno, $errstr, $errfile, $errline, array $errcontext) {
       $this->error_number = $errno;
   }
+
+
+  public function get_url_contents($url) {
+    $this->curl_installed = $this->is_curl_installed();
+
+    //preferrably with curl, but else with file get contents
+    if ($this->curl_installed) {
+
+        $ch = curl_init();
+        $timeout = 5;
+        curl_setopt($ch,CURLOPT_URL,$url);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+        curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,$timeout);
+        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
+
+        $filecontents = curl_exec($ch);
+        if(curl_errno($ch)) {
+          $this->error_number = curl_errno($ch);
+        } else {
+          $this->error_number = 0;
+        }
+
+        curl_close($ch);
+      } else {
+        set_error_handler(array($this,'custom_error_handling'));
+        $filecontents = file_get_contents($url);
+        //errors back to normal
+        restore_error_handler();
+      }
+      return $filecontents;
+  }
+
 
   /**
    * Checks for SSL by opening a test page in the plugin directory
@@ -536,37 +613,40 @@ defined('ABSPATH') or die("you do not have acces to this page!");
 
     $old_ssl_setting = $this->site_has_ssl;
     $testpage_url = trailingslashit(str_replace ("http://" , "https://" , $this->plugin_url))."ssl-test-page.php";
-    //$testpage_url = "https://www.rogierlankhorst.com/wp-content/plugins/really-simple-ssl/ssl-test-page.php";
-    //do the error handling myself, because non functioning ssl will result in a warning
-    //set_error_handler(array($this,'custom_error_handling'));
 
-    $ch = curl_init();
-    $timeout = 5;
-    curl_setopt($ch,CURLOPT_URL,$testpage_url);
-    curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
-    curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,$timeout);
+    $filecontents = $this->get_url_contents($testpage_url);
 
-    $filecontents = curl_exec($ch);
+    /*
+          also check if we are currently on ssl protocol,
+          so if an error occurs but is_ssl_extended returns true,
+          the site_has_ssl will still be set to true.
+          This should never happen, but it prevents cases where an
+          ssl page returns a "no ssl detected message"
+    */
 
-    //also check for ssl, so if an error occurs but is_ssl returns true, the $testpage_loaded will still return true.
-    //This should never happen, but it prevents cases where an ssl page returns a "no ssl detected message"
-    if(curl_errno($ch) && !is_ssl()){
-      $test_page_loaded = FALSE;
-      if ($this->debug) {
-        $this->trace_log(
-          "The ssl page returned an error: ".$this->get_curl_error(curl_errno($ch))
-        );
-      }
+    if(($this->error_number!=0) && !$this->is_ssl_extended()){
+      $this->site_has_ssl = FALSE;
     } else {
-      $test_page_loaded = TRUE;
+      $this->site_has_ssl = TRUE;
     }
 
-    //$filecontents = file_get_contents($testpage_url);
-    //errors back to normal
-    //restore_error_handler();
-    curl_close($ch);
-    if ($test_page_loaded) {
-      $this->site_has_ssl = TRUE;
+    if($this->error_number!=0) {
+      $errormsg = $this->get_curl_error($this->error_number);
+    }
+
+    if ($this->debug) {
+      if(!$this->site_has_ssl && ($this->error_number!=0)) {
+        //no page loaded, so show error
+        $this->trace_log("The ssl page returned an error: ".$errormsg);
+      }elseif($this->site_has_ssl && ($this->error_number!=0)){
+        //we do have ssl, but the page did not load
+        $this->trace_log("We do have ssl, but the test page loaded with an error: ".$errormsg);
+      } else{
+        $this->trace_log("SSL test page loaded successfully");
+      }
+    }
+
+    if ($this->site_has_ssl) {
       //check the type of ssl
       if (strpos($filecontents, "#LOADBALANCER#") !== false) {
         $this->ssl_type = "LOADBALANCER";
@@ -588,12 +668,7 @@ defined('ABSPATH') or die("you do not have acces to this page!");
         //no recognized response, so set to NA
         $this->ssl_type = "NA";
       }
-	  if ($this->debug) {$this->trace_log("ssl discovered: ".$this->ssl_type);}
-    }
-    else {
-      $this->site_has_ssl = FALSE;
-      //reset error
-      $this->error_number = 0;
+	    if ($this->debug) {$this->trace_log("ssl type: ".$this->ssl_type);}
     }
 
     if ($old_ssl_setting != $this->site_has_ssl) {
@@ -618,7 +693,7 @@ defined('ABSPATH') or die("you do not have acces to this page!");
   public function test_htaccess_redirect() {
     if (!current_user_can($this->capability)) return;
 	  if ($this->debug) {$this->trace_log("testing htaccess rules...");}
-
+    $filecontents = "";
     $testpage_url = str_replace ("http://" , "https://" ,$this->plugin_url."testssl/");
     switch ($this->ssl_type) {
     case "LOADBALANCER":
@@ -636,22 +711,27 @@ defined('ABSPATH') or die("you do not have acces to this page!");
     case "SERVERPORT443":
         $testpage_url .= "serverport443";
         break;
-}
+    }
+
     $testpage_url .= ("/ssl-test-page.html");
 
-    //do the error handling myself, because non functioning ssl will result in a warning
-    set_error_handler(array($this,'custom_error_handling'));
-    $filecontents = file_get_contents($testpage_url);
-    //errors back to normal
-    restore_error_handler();
-    if ($this->error_number==0) {
+    $filecontents = $this->get_url_contents($testpage_url);
+    if (($this->error_number==0) && (strpos($filecontents, "#SSL TEST PAGE#") !== false)) {
       $this->htaccess_test_success = TRUE;
 		  if ($this->debug) {$this->trace_log("htaccess rules test success.");}
     }else{
       //.htaccess rewrite rule seems to be giving problems.
+      //$this->get_curl_error($this->error_number)
       $this->htaccess_test_success = FALSE;
-		  if ($this->debug) {$this->trace_log("htaccess rules test fail.");}
+      if ($this->debug) {
+        if ($this->error_number!=0) {
+            $this->trace_log("htaccess rules test failed with error: ".$this->get_curl_error($this->error_number));
+        } else {
+          $this->trace_log("htaccess test rules failed.");
+        }
+      }
     }
+
   }
 
   /**
@@ -833,15 +913,20 @@ public function getABSPATH(){
    *
    */
 
-  public function get_redirect_rules() {
+  public function get_redirect_rules($examplecode=false) {
       if (!current_user_can($this->capability)) return;
       //only add the redirect rules when a known type of ssl was detected. Otherwise, we use https.
-      $rule  = "# BEGIN rlrssslReallySimpleSSL rsssl_version[".$this->plugin_version."]\n";
-
+      $rule="";
+      if (!$examplecode) {
+        $rule .= "# BEGIN rlrssslReallySimpleSSL rsssl_version[".$this->plugin_version."]\n";
+      }
       //if the htaccess test was successfull, and we know the redirectype, edit
-      if ($this->htaccess_test_success && ($this->ssl_type != "NA")) {
+      if ($examplecode || ($this->htaccess_test_success && ($this->ssl_type != "NA"))) {
         //set redirect_set_in_htaccess to true, because we are now making a redirect rule.
-        $this->ssl_redirect_set_in_htaccess = TRUE;
+        if (!$examplecode) {
+          $this->ssl_redirect_set_in_htaccess = TRUE;
+        }
+
         $rule .= "<IfModule mod_rewrite.c>"."\n";
         $rule .= "RewriteEngine on"."\n";
 
@@ -888,7 +973,9 @@ public function getABSPATH(){
         $rule .= "Header always set Strict-Transport-Security 'max-age=31536000' env=HTTPS"."\n";
         $rule .= "</IfModule>"."\n";
       }
-      $rule .= "# END rlrssslReallySimpleSSL"."\n";
+      if (!$examplecode) {
+          $rule .= "# END rlrssslReallySimpleSSL"."\n";
+      }
 
       $rule = preg_replace("/\n+/","\n", $rule);
       return $rule;
@@ -905,7 +992,12 @@ public function getABSPATH(){
 
 public function show_notices()
 {
+  /*
+      This message is shown when no ssl is detected.
+  */
+
   if (!($this->site_has_ssl || $this->force_ssl_without_detection)  && !$this->ssl_fail_message_shown) {
+
     parse_str($_SERVER['QUERY_STRING'], $params);
     add_action('admin_print_footer_scripts', array($this, 'insert_dismiss_fail'));
       ?>
@@ -929,7 +1021,10 @@ public function show_notices()
         </p></div>
         <?php
   }
+
+  //some notices for ssl situations
   if ($this->site_has_ssl || $this->force_ssl_without_detection) {
+
       if ($this->plugin_conflict) {
         ?>
         <div id="message" class="error fade notice"><p>
@@ -1192,7 +1287,6 @@ public function settings_page() {
       */
 
       ?>
-      <div>
         <h2><?php echo __("Detected setup","rlrsssl-really-simple-ssl");?></h2>
         <table <?php if ($this->site_has_ssl||$this->force_ssl_without_detection) {echo 'id="scan-result"';}?>>
           <tr>
@@ -1220,10 +1314,24 @@ public function settings_page() {
             <?php
               if($this->ssl_redirect_set_in_htaccess) {
                  _e("https redirect set in .htaccess","rlrsssl-really-simple-ssl");
-              } elseif (!$this->htaccess_test_success) {
-                 _e("Https redirect was set in javascript, because the proposed redirect for the htaccess would result in a redirect loop. I'd like to know if this happens: info@rogierlankhorst.com","rlrsssl-really-simple-ssl");
               } else {
-                 _e("Https redirect was set in javascript, because .htaccess was not available or writable, or the ssl configuration was not recognized.","rlrsssl-really-simple-ssl");
+                 _e("Https redirect was set in javascript because the htaccess redirect rule could not be verified. Set manually if you want to redirect in .htaccess.","rlrsssl-really-simple-ssl");
+
+                 $examplecode = true;
+                 $rules = $this->get_redirect_rules($examplecode);
+                 echo "&nbsp;";
+                 if (strlen($rules)>0) {
+                    $arr_search = array("<",">","\n");
+                    $arr_replace = array("&lt","&gt","<br>");
+                    $rules = str_replace($arr_search, $arr_replace, $rules);
+                    _e("Try to add these rules at the bottom of your .htaccess","rlrsssl-really-simple-ssl");
+                     ?>
+                     <br><br>
+                     <code>
+                         <?php echo $rules; ?>
+                       </code>
+                     <?php
+                   }
               }
             ?>
             </td><td></td>
@@ -1266,11 +1374,18 @@ public function settings_page() {
       <?php
         break;
       case 'mixedcontent' :
-       ?>
-        <table id="scan-list"><tr><td colspan="3"></td></tr></table>
+      /*
+        third tab: scan of mixed content
+      */
 
-        </div>
-        <?php
+        if ($this->site_has_ssl || $this->force_ssl_without_detection) {
+          ?>
+          <table id="scan-list"><tr><td colspan="3"></td></tr></table>
+          <?php
+        } else {
+          echo "<p>".__("The mixed content scan is available when SSL is detected or forced.","rlrsssl-really-simple-ssl")."</p>";
+        }
+
         break;
       case 'debug' :
          ?>
@@ -1546,13 +1661,17 @@ public function check_plugin_conflicts() {
     if ($forcerewritetitle) {
       $this->plugin_conflict = TRUE;
       if ($this->debug) {$this->trace_log("Force rewrite titles set in Yoast plugin, which prevents really simple ssl from replacing mixed content");}
+    } else {
+      if ($this->debug) {$this->trace_log("No conflict issues with Yoast SEO detected");}
     }
   }
 
 }
 
 public function get_curl_error($error_no) {
+  if ($error_no<0 || $error_no>88) {return "unknown error";}
   $error_codes=array(
+    0 => 'CURLE_SUCCESS',
     1 => 'CURLE_UNSUPPORTED_PROTOCOL',
     2 => 'CURLE_FAILED_INIT',
     3 => 'CURLE_URL_MALFORMAT',
