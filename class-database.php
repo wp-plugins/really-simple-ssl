@@ -36,7 +36,6 @@ class rlrsssl_database {
   }
 
     public function fix_insecure_post_links() {
-        //error_log("fixing insecure post links");
         global $wpdb;
         /*
         $wpdb->query(
@@ -85,7 +84,8 @@ class rlrsssl_database {
           }
         }
         //ignore siteurl and home, because we take care of these
-        $where.= sprintf(') AND NOT (%1$s.option_name = "siteurl" OR %1$s.option_name = "home")',$wpdb->options);
+        $where.= sprintf(') AND NOT (%1$s.option_name = "siteurl" OR %1$s.option_name = "home" ',$wpdb->options);
+        $where.= " OR ".$wpdb->options.".option_name LIKE '_transient%' OR ".$wpdb->options.".option_name LIKE '_site_transient%')";
         $results = $wpdb->get_results($where);
         //limit to 25
         $count=0;

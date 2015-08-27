@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.3
-Stable tag: 2.1.16
+Stable tag: 2.1.17
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -14,7 +14,7 @@ The really simple ssl plugin detects ssl by trying to open a page through https.
 If ssl is detected it will configure your site to support ssl.
 
 = Two simple steps for setup: =
-* Get an SSL certificate from your hosting provider (can't do that for you, sorry)
+* Get an SSL certificate from your hosting provider (can't do that for you, sorry).
 * Activate this plugin.
 
 = What does the plugin actually do =
@@ -24,9 +24,10 @@ If ssl is detected it will configure your site to support ssl.
 
 = Feedback is welcome! =
 If you have any problems, I am happy to help, but I can only help with sufficient information. I need the following information:
-* Trace log: Activate debug and copy the results
-* Domain
-* Plugin list
+
+* Trace log: Activate debug and copy the results,
+* Domain,
+* Plugin list,
 
 For more information: go to the [website](http://www.rogierlankhorst.com/really-simple-ssl/), or
 [contact](http://www.rogierlankhorst.com/really-simple-ssl-contact-form/) me if you have any questions or suggestions.
@@ -73,7 +74,7 @@ It is also my opinion that the internet is moving toward an all ssl internet.
 * Yes, although it is of course better if you just edit the insecure links directly.
 If that is not possible, or is very time consuming, add the following to your functions.php:
 
-function my_custom_http_urls($arr) {
+'function my_custom_http_urls($arr) {
 
 	array_push($arr, "http://www.facebook.com", "http://twitter.com");
 
@@ -81,7 +82,7 @@ function my_custom_http_urls($arr) {
 
 }
 
-add_filter("rlrsssl_replace_url_args","my_custom_http_urls");
+add_filter("rlrsssl_replace_url_args","my_custom_http_urls");'
 
 Needless to say, these urls should be available over ssl, otherwise it won’t work…
 
@@ -99,15 +100,15 @@ to activate per site, you have to prevent the plugin from editing the .htaccess.
 1. Remove the really simple ssl rewrite rules from your htaccess.
 2. Add the following to your wp-config.php
 
-define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , TRUE );
+'define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , TRUE );'
 
 = How to uninstall when website/backend is not accessible =
 
 1. Remove the plug-in rules from the .htaccess file
 2. change the siteurl back to http by adding
 
-update_option('siteurl','http://example.com');
-update_option('home','http://example.com');
+'update_option('siteurl','http://example.com');'
+'update_option('home','http://example.com');'
 
 to your functions.php (where example.com is your domain of course). Remove afterwards.
 If you use defines in your wp-config.php or functions.php for your urls, change that too.
@@ -119,8 +120,13 @@ If you use defines in your wp-config.php or functions.php for your urls, change 
 5. Clear your browser history, or use a different browser.
 
 == Changelog ==
+= 2.1.17 =
+* Fixed a bug where example .htaccess rewrite rules weren't generated correctly
+* Added woocommerce to the plugin conflicts handler, as some settings conflict with this plugin, and are superfluous when you force your site to ssl anyway.
+* Excluded transients from mixed content scan results
+
 = 2.1.16 =
-* Fixed a bug where script would fail because curl function was not installed. 
+* Fixed a bug where script would fail because curl function was not installed.
 * Added debug messages
 * Improved FAQ, removed typos
 * Replaced screenshots

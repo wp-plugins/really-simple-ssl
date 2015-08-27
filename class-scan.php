@@ -74,7 +74,7 @@ public function scan_callback() {
     $result_html  = "<tr><td>";
     $result_html .= $this->autoreplace_insecure_links ? $this->img_success :$this->img_warning;
     $result_html .= "</td><td>".__('Mixed content detected ','rlrsssl-really-simple-ssl');
-    $result_html .= $this->autoreplace_insecure_links ? __("and the mixed content fix is active.","rlrsssl-really-simple-ssl") : __("but the mixed content fix is not active.","rlrsssl-really-simple-ssl");
+    $result_html .= $this->autoreplace_insecure_links ? __("but that's ok, because the mixed content fixer is active.","rlrsssl-really-simple-ssl") : __("but the mixed content fix is not active.","rlrsssl-really-simple-ssl");
     $result_html .= "</td>";
     $result_html .= "<td><a href='?page=rlrsssl_really_simple_ssl&tab=settings'>".__("Manage settings","rlrsssl-really-simple-ssl")."</a></td></td></tr>";
     //next row

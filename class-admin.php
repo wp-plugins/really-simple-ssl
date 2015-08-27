@@ -30,7 +30,7 @@ defined('ABSPATH') or die("you do not have acces to this page!");
      $ssl_success_message_shown       = FALSE,
      $hsts                            = FALSE,
      $debug_log,
-     $plugin_conflict                 = FALSE,
+     $plugin_conflict                 = ARRAY(),
      $plugin_db_version;
 
   public function __construct()
@@ -48,6 +48,9 @@ defined('ABSPATH') or die("you do not have acces to this page!");
    */
 
   public function get_admin_options(){
+    if ( !defined( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' ) ) {
+        define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , FALSE );
+    }
 
     $options = get_option('rlrsssl_options');
     if (isset($options)) {
@@ -721,7 +724,7 @@ defined('ABSPATH') or die("you do not have acces to this page!");
 		  if ($this->debug) {$this->trace_log("htaccess rules test success.");}
     }else{
       //.htaccess rewrite rule seems to be giving problems.
-      //$this->get_curl_error($this->error_number)
+      if ($this->ssl_type)
       $this->htaccess_test_success = FALSE;
       if ($this->debug) {
         if ($this->error_number!=0) {
@@ -871,9 +874,15 @@ public function getABSPATH(){
       if (!current_user_can($this->capability)) return;
       //check if htacces exists and  if htaccess is writable
       //update htaccess to redirect to ssl and set redirect_set_in_htaccess
-      if($this->debug) $this->trace_log("checking if .htaccess can or should be edited...");
-      if ( !defined( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' ) ) {
-          define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , FALSE );
+
+      if($this->debug) {
+        $this->trace_log("checking if .htaccess can or should be edited...");
+        if (RLRSSSL_DO_NOT_EDIT_HTACCESS) $this->trace_log("Edit of .htaccess blocked by wp-config constant RLRSSSL_DO_NOT_EDIT_HTACCESS.");
+        if (!file_exists($this->ABSpath.".htaccess")) {
+            $this->trace_log("htaccess file does not exist.");
+            if (!is_writable($this->ABSpath.".htaccess"))
+                $this->trace_log(".htaccess not writable.");
+        }
       }
 
       if (!RLRSSSL_DO_NOT_EDIT_HTACCESS && file_exists($this->ABSpath.".htaccess") && is_writable($this->ABSpath.".htaccess")) {
@@ -913,17 +922,17 @@ public function getABSPATH(){
    *
    */
 
-  public function get_redirect_rules($examplecode=false) {
+  public function get_redirect_rules($manual=false) {
       if (!current_user_can($this->capability)) return;
       //only add the redirect rules when a known type of ssl was detected. Otherwise, we use https.
-      $rule="";
-      if (!$examplecode) {
+      $rule="\n";
+      if (!$manual) {
         $rule .= "# BEGIN rlrssslReallySimpleSSL rsssl_version[".$this->plugin_version."]\n";
       }
       //if the htaccess test was successfull, and we know the redirectype, edit
-      if ($examplecode || ($this->htaccess_test_success && ($this->ssl_type != "NA"))) {
+      if ($manual || ($this->htaccess_test_success && ($this->ssl_type != "NA"))) {
         //set redirect_set_in_htaccess to true, because we are now making a redirect rule.
-        if (!$examplecode) {
+        if (!$manual) {
           $this->ssl_redirect_set_in_htaccess = TRUE;
         }
 
@@ -973,7 +982,7 @@ public function getABSPATH(){
         $rule .= "Header always set Strict-Transport-Security 'max-age=31536000' env=HTTPS"."\n";
         $rule .= "</IfModule>"."\n";
       }
-      if (!$examplecode) {
+      if (!$manual) {
           $rule .= "# END rlrssslReallySimpleSSL"."\n";
       }
 
@@ -1025,15 +1034,37 @@ public function show_notices()
   //some notices for ssl situations
   if ($this->site_has_ssl || $this->force_ssl_without_detection) {
 
-      if ($this->plugin_conflict) {
-        ?>
-        <div id="message" class="error fade notice"><p>
-        <?php _e("Really Simple SSL has a conflict with another plugin.","rlrsssl-really-simple-ssl");?><br>
-        <?php _e("The force rewrite titles option in Yoast SEO prevents Really Simple SSL plugin from fixing mixed content.","rlrsssl-really-simple-ssl");?><br>
-        <a href="admin.php?page=wpseo_titles"><?php _e("Show me this setting","rlrsssl-really-simple-ssl");?></a>
+      if (sizeof($this->plugin_conflict)>0) {
+        if (isset($this->plugin_conflict["YOAST_FORCE_REWRITE_TITLE"]) && $this->plugin_conflict["YOAST_FORCE_REWRITE_TITLE"]) {
+            ?>
+            <div id="message" class="error fade notice"><p>
+            <?php _e("Really Simple SSL has a conflict with another plugin.","rlrsssl-really-simple-ssl");?><br>
+            <?php _e("The force rewrite titles option in Yoast SEO prevents Really Simple SSL plugin from fixing mixed content.","rlrsssl-really-simple-ssl");?><br>
+            <a href="admin.php?page=wpseo_titles"><?php _e("Show me this setting","rlrsssl-really-simple-ssl");?></a>
 
-        </p></div>
-        <?php
+            </p></div>
+            <?php
+          }
+        if (isset($this->plugin_conflict["WOOCOMMERCE_FORCEHTTP"]) && $this->plugin_conflict["WOOCOMMERCE_FORCEHTTP"] && isset($this->plugin_conflict["WOOCOMMERCE_FORCESSL"]) && $this->plugin_conflict["WOOCOMMERCE_FORCESSL"]) {
+          ?>
+          <div id="message" class="error fade notice"><p>
+          <?php _e("Really Simple SSL has a conflict with another plugin.","rlrsssl-really-simple-ssl");?><br>
+          <?php _e("The force http after leaving checkout in Woocommerce will create a redirect loop.","rlrsssl-really-simple-ssl");?><br>
+          <a href="admin.php?page=wc-settings&tab=checkout"><?php _e("Show me this setting","rlrsssl-really-simple-ssl");?></a>
+
+          </p></div>
+          <?php
+        }
+        if (isset($this->plugin_conflict["WOOCOMMERCE_FORCESSL"]) && $this->plugin_conflict["WOOCOMMERCE_FORCESSL"]) {
+          ?>
+          <div id="message" class="error fade notice"><p>
+          <?php _e("Really Simple SSL has detected a superfluous setting.","rlrsssl-really-simple-ssl");?><br>
+          <?php _e("The force ssl on checkout pages is not necessary anymore, and could cause unexpected results.","rlrsssl-really-simple-ssl");?><br>
+          <a href="admin.php?page=wc-settings&tab=checkout"><?php _e("Show me this setting","rlrsssl-really-simple-ssl");?></a>
+
+          </p></div>
+          <?php
+        }
       }
 
       if ($this->wpconfig_issue) {
@@ -1288,7 +1319,7 @@ public function settings_page() {
 
       ?>
         <h2><?php echo __("Detected setup","rlrsssl-really-simple-ssl");?></h2>
-        <table <?php if ($this->site_has_ssl||$this->force_ssl_without_detection) {echo 'id="scan-result"';}?>>
+        <table class="really-simple-ssl-table" <?php if ($this->site_has_ssl||$this->force_ssl_without_detection) {echo 'id="scan-result"';}?>>
           <tr>
             <td><?php echo $this->site_has_ssl ? $this->img("success") : $this->img("error");?></td>
             <td><?php
@@ -1308,30 +1339,30 @@ public function settings_page() {
           <?php if($this->site_has_ssl || $this->force_ssl_without_detection) { ?>
           <tr>
             <td>
-              <?php echo $this->ssl_redirect_set_in_htaccess ? $this->img("success") :$this->img("warning");?>
+              <?php echo ($this->ssl_redirect_set_in_htaccess || RLRSSSL_DO_NOT_EDIT_HTACCESS) ? $this->img("success") :$this->img("warning");?>
             </td>
             <td>
             <?php
               if($this->ssl_redirect_set_in_htaccess) {
                  _e("https redirect set in .htaccess","rlrsssl-really-simple-ssl");
+              } elseif (RLRSSSL_DO_NOT_EDIT_HTACCESS) {
+                 _e("Editing of .htaccess is blocked in wp-config.php, so you're in control of the .htaccess file.","rlrsssl-really-simple-ssl");
               } else {
                  _e("Https redirect was set in javascript because the htaccess redirect rule could not be verified. Set manually if you want to redirect in .htaccess.","rlrsssl-really-simple-ssl");
-
-                 $examplecode = true;
-                 $rules = $this->get_redirect_rules($examplecode);
-                 echo "&nbsp;";
-                 if (strlen($rules)>0) {
+                 if ($this->ssl_type!="NA") {
+                    $manual = true;
+                    $rules = $this->get_redirect_rules($manual);
+                    echo "&nbsp;";
                     $arr_search = array("<",">","\n");
                     $arr_replace = array("&lt","&gt","<br>");
                     $rules = str_replace($arr_search, $arr_replace, $rules);
-                    _e("Try to add these rules at the bottom of your .htaccess","rlrsssl-really-simple-ssl");
+                    _e("Try to add these rules at the bottom of your .htaccess. If it doesn't work, just remove them again.","rlrsssl-really-simple-ssl");
                      ?>
-                     <br><br>
-                     <code>
+                     <br><br><code>
                          <?php echo $rules; ?>
                        </code>
                      <?php
-                   }
+                  }
               }
             ?>
             </td><td></td>
@@ -1388,12 +1419,15 @@ public function settings_page() {
 
         break;
       case 'debug' :
+      /*
+        fourth tab: debug
+      */
          ?>
     <div>
       <?php
       if ($this->debug) {
-        echo "<h2>Log for debugging purposes.</h2>";
-        echo "<p>Send me a copy of these lines if you have any issues. The log will be erased when debug is set to false.</p>";
+        echo "<h2>".__("Log for debugging purposes","rlrsssl-really-simple-ssl")."</h2>";
+        echo "<p>".__("Send me a copy of these lines if you have any issues. The log will be erased when debug is set to false","rlrsssl-really-simple-ssl")."</p>";
         echo "<div class='debug-log'>";
         echo $this->debug_log;
         echo "</div>";
@@ -1401,7 +1435,7 @@ public function settings_page() {
         $this->save_options();
       }
       else {
-        echo "To get results here, set the debugging option under configuration to 'on'.";
+        _e("To view results here, enable the debug option in the settings tab.","rlrsssl-really-simple-ssl");
       }
 
        ?>
@@ -1659,10 +1693,25 @@ public function check_plugin_conflicts() {
     $wpseo_options  = get_option("wpseo_titles");
     $forcerewritetitle = isset($wpseo_options['forcerewritetitle']) ? $wpseo_options['forcerewritetitle'] : FALSE;
     if ($forcerewritetitle) {
-      $this->plugin_conflict = TRUE;
+      $this->plugin_conflict["YOAST_FORCE_REWRITE_TITLE"] = TRUE;
       if ($this->debug) {$this->trace_log("Force rewrite titles set in Yoast plugin, which prevents really simple ssl from replacing mixed content");}
     } else {
       if ($this->debug) {$this->trace_log("No conflict issues with Yoast SEO detected");}
+    }
+  }
+
+  if (class_exists('WooCommerce')) {
+    $woocommerce_force_ssl_checkout = get_option("woocommerce_force_ssl_checkout");
+    $woocommerce_unforce_ssl_checkout = get_option("woocommerce_unforce_ssl_checkout");
+    if (isset($woocommerce_force_ssl_checkout) && $woocommerce_force_ssl_checkout!="no") {
+      $this->plugin_conflict["WOOCOMMERCE_FORCESSL"] = TRUE;
+      if ($this->debug) {$this->trace_log("Force ssl on checkout set in woocommerce. This option is not necessary, better disable it to prevent issues.");}
+    }
+
+    //setting force ssl in certain pages with woocommerce will result in redirect errors.
+    if (isset($woocommerce_unforce_ssl_checkout) && $woocommerce_unforce_ssl_checkout!="no") {
+      $this->plugin_conflict["WOOCOMMERCE_FORCEHTTP"] = TRUE;
+      if ($this->debug) {$this->trace_log("Force HTTP when leaving the checkout set in woocommerce, disable this setting to prevent redirect loops.");}
     }
   }
 

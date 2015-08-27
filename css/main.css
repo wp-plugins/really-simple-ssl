@@ -1,3 +1,6 @@
+.really-simple-ssl-table td {
+  vertical-align: top;
+}
 .debug-log {
   background-color: #fff;
   padding:15px;
