@@ -1,3 +1,12 @@
+.really-simple-ssl-table td {
+  vertical-align: top;
+}
+.debug-log {
+  background-color: #fff;
+  padding:15px;
+  border:1px solid black;
+}
+
 .icons {
   width:15px;
   height:15px;
