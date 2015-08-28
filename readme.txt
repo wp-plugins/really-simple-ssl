@@ -5,7 +5,7 @@ Tags: secure website, website security, ssl, https, tls, security, secure socket
 Requires at least: 4.2
 License: GPL2
 Tested up to: 4.3
-Stable tag: 2.1.17
+Stable tag: 2.1.18
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
 
@@ -54,51 +54,51 @@ For more information: go to the [website](http://www.rogierlankhorst.com/really-
 
 == Frequently Asked Questions ==
 = Some parts of my site aren't loading =
-* Your site possibly includes external resources which cannot load over https. Use "inspect element" on your website to see what links are causing this.
+Your site possibly includes external resources which cannot load over https. Use "inspect element" on your website to see what links are causing this.
 Resources that cannot be loaded over https cannot be included on a SSL website.
 
 = My browser still gives mixed content warnings =
 * Clear the cache of your wordpress site, if you use a caching plugin.
 * Clear the cache of your browser
 * Your site possibly includes external resources that were not replaced.
-Use "inspect element" on your website to see what links are causing this (you can ignore hyperlinks).
+Om Chrome, right click on your webpage, then select "inspect element" to see what links are causing this (you can ignore hyperlinks).
 * If you look in the source of your website and see links to your own site, or src="http:// links that were not replaced, there might be a plugin conflict.
 You can check this by deactivating your plugins one by one, and see if really simple ssl starts working.
 Let me know if you find a plugin conflict, so I can put it in my conflict list, and check it on activation.
 
 = Is it possible to exclude certain urls from the ssl redirect? =
-* That is not possible. This plugin simply forces your complete site over https, which keeps it lightweight.
+That is not possible. This plugin simply forces your complete site over https, which keeps it lightweight.
 It is also my opinion that the internet is moving toward an all ssl internet.
 
 = Is it possible to add urls that should be replaced to https? =
-* Yes, although it is of course better if you just edit the insecure links directly.
+Yes, although it is of course better if you just edit the insecure links directly.
 If that is not possible, or is very time consuming, add the following to your functions.php:
 
-'function my_custom_http_urls($arr) {
-
-	array_push($arr, "http://www.facebook.com", "http://twitter.com");
-
-	return $arr;
-
-}
-
-add_filter("rlrsssl_replace_url_args","my_custom_http_urls");'
+'function my_custom_http_urls($arr) {'
+	'array_push($arr, "http://www.facebook.com", "http://twitter.com");'
+	'return $arr;'
+	'}'
+'add_filter("rlrsssl_replace_url_args","my_custom_http_urls");'
 
 Needless to say, these urls should be available over ssl, otherwise it won’t work…
 
 = Is the plugin suitable for wordpress multisite? =
-* Yes, it works on multisite, both with domain mapping and with subdomains. The plugin should be activated for all sites though. If you want
+Yes, it works on multisite, both with domain mapping and with subdomains. The plugin should be activated for all sites though. If you want
 to activate per site, you have to prevent the plugin from editing the .htaccess. Editing the .htaccess on a per site basis is on my to do list.
 
 = Does the plugin do a seo friendly 301 redirect in the .htaccess? =
-* Yes, default the plugin redirects permanently with [R=301].
+Yes, default the plugin redirects permanently with [R=301].
 
 = Does the plugin also redirect all subpages to https? =
-* Yes, every request to your domain gets redirected to https.
+Yes, every request to your domain gets redirected to https.
 
-= The htaccess edit results in a redirect loop. How can I fix this =
-1. Remove the really simple ssl rewrite rules from your htaccess.
-2. Add the following to your wp-config.php
+= My subdirectories do not redirect =
+Try replacing the current rewrite rules in your .htaccess file with
+'RewriteEngine On
+RewriteCond %{HTTPS} !=on [NC]
+RewriteRule ^(.*) https://SITENAME.com/$1 [R=301,L]'
+
+If that works, add to your wp-config.php (to prevent the plugin from overwriting these rules on update):
 
 'define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS' , TRUE );'
 
@@ -120,6 +120,10 @@ If you use defines in your wp-config.php or functions.php for your urls, change 
 5. Clear your browser history, or use a different browser.
 
 == Changelog ==
+= 2.1.18 =
+* Made woocommerce warning dismissable, as it does not seem to cause issues
+* Fixed a bug caused by WP native plugin_dir_url() returning relative path, resulting in no ssl messages
+
 = 2.1.17 =
 * Fixed a bug where example .htaccess rewrite rules weren't generated correctly
 * Added woocommerce to the plugin conflicts handler, as some settings conflict with this plugin, and are superfluous when you force your site to ssl anyway.

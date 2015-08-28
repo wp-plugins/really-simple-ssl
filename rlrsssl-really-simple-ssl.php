@@ -3,7 +3,7 @@
  * Plugin Name: Really Simple SSL
  * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.1.17
+ * Version: 2.1.18
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
@@ -101,6 +101,7 @@ class rlrsssl_really_simple_ssl extends rlrsssl_admin_layer {
       	//callbacks for the ajax dismiss buttons
       	add_action('wp_ajax_dismiss_fail_message', array($this,'dismiss_fail_message_callback') );
       	add_action('wp_ajax_dismiss_success_message', array($this,'dismiss_success_message_callback') );
+        add_action('wp_ajax_dismiss_woocommerce_forcessl_message', array($this,'dismiss_woocommerce_forcessl_message_callback') );
 
         //handle notices
         add_action('admin_notices', array($this,'show_notices'));

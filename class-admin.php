@@ -26,11 +26,12 @@ defined('ABSPATH') or die("you do not have acces to this page!");
 	   $debug							                = TRUE,
      $ABSpath,
 
-     $ssl_fail_message_shown          = FALSE,
-     $ssl_success_message_shown       = FALSE,
-     $hsts                            = FALSE,
+     $ssl_fail_message_shown            = FALSE,
+     $ssl_success_message_shown         = FALSE,
+     $woocommerce_forcessl_message_shown= FALSE,
+     $hsts                              = FALSE,
      $debug_log,
-     $plugin_conflict                 = ARRAY(),
+     $plugin_conflict                   = ARRAY(),
      $plugin_db_version;
 
   public function __construct()
@@ -54,15 +55,16 @@ defined('ABSPATH') or die("you do not have acces to this page!");
 
     $options = get_option('rlrsssl_options');
     if (isset($options)) {
-      $this->hsts                       = isset($options['hsts']) ? $options['hsts'] : FALSE;
-      $this->ssl_fail_message_shown     = isset($options['ssl_fail_message_shown']) ? $options['ssl_fail_message_shown'] : FALSE;
-      $this->ssl_success_message_shown  = isset($options['ssl_success_message_shown']) ? $options['ssl_success_message_shown'] : FALSE;
-      $this->plugin_db_version          = isset($options['plugin_db_version']) ? $options['plugin_db_version'] : "1.0";
-      $this->wpconfig_issue             = isset($options['wpconfig_issue']) ? $options['wpconfig_issue'] : FALSE;
-      $this->wpconfig_loadbalancer_fix_failed = isset($options['wpconfig_loadbalancer_fix_failed']) ? $options['wpconfig_loadbalancer_fix_failed'] : FALSE;
-      $this->set_rewriterule_per_site   = isset($options['set_rewriterule_per_site']) ? $options['set_rewriterule_per_site'] : FALSE;
-      $this->debug                      = isset($options['debug']) ? $options['debug'] : FALSE;
-      $this->debug_log                  = isset($options['debug_log']) ? $options['debug_log'] : "";
+      $this->hsts                               = isset($options['hsts']) ? $options['hsts'] : FALSE;
+      $this->ssl_fail_message_shown             = isset($options['ssl_fail_message_shown']) ? $options['ssl_fail_message_shown'] : FALSE;
+      $this->ssl_success_message_shown          = isset($options['ssl_success_message_shown']) ? $options['ssl_success_message_shown'] : FALSE;
+      $this->woocommerce_forcessl_message_shown = isset($options['woocommerce_forcessl_message_shown']) ? $options['woocommerce_forcessl_message_shown'] : FALSE;
+      $this->plugin_db_version                  = isset($options['plugin_db_version']) ? $options['plugin_db_version'] : "1.0";
+      $this->wpconfig_issue                     = isset($options['wpconfig_issue']) ? $options['wpconfig_issue'] : FALSE;
+      $this->wpconfig_loadbalancer_fix_failed   = isset($options['wpconfig_loadbalancer_fix_failed']) ? $options['wpconfig_loadbalancer_fix_failed'] : FALSE;
+      $this->set_rewriterule_per_site           = isset($options['set_rewriterule_per_site']) ? $options['set_rewriterule_per_site'] : FALSE;
+      $this->debug                              = isset($options['debug']) ? $options['debug'] : FALSE;
+      $this->debug_log                          = isset($options['debug_log']) ? $options['debug_log'] : "";
     }
     if ($this->debug) {
       //earliest moment of logging, so clear log
@@ -473,6 +475,7 @@ defined('ABSPATH') or die("you do not have acces to this page!");
       'hsts'                              => $this->hsts,
       'ssl_fail_message_shown'            => $this->ssl_fail_message_shown,
       'ssl_success_message_shown'         => $this->ssl_success_message_shown,
+      'woocommerce_forcessl_message_shown'         => $this->woocommerce_forcessl_message_shown,
       'autoreplace_insecure_links'        => $this->autoreplace_insecure_links,
       'plugin_db_version'                 => $this->plugin_db_version,
       'wpconfig_issue'                    => $this->wpconfig_issue,
@@ -517,6 +520,7 @@ defined('ABSPATH') or die("you do not have acces to this page!");
     $this->hsts                         = FALSE;
     $this->ssl_fail_message_shown       = FALSE;
     $this->ssl_success_message_shown    = FALSE;
+    $this->woocommerce_forcessl_message_shown    = FALSE;
     $this->autoreplace_insecure_links   = TRUE;
     $this->save_options();
 
@@ -788,10 +792,19 @@ public function getABSPATH(){
    *
    */
 
-  public function get_plugin_url(){
+   public function get_plugin_url(){
+     $this->plugin_url = trailingslashit(plugin_dir_url( __FILE__ ));
+     //make sure we are on https
+     $this->plugin_url = str_replace ( "http://" , "https://" , $this->plugin_url);
+     $home = str_replace ( "http://" , "https://" , home_url());
 
-    $this->plugin_url = trailingslashit(plugins_url()).trailingslashit(dirname(plugin_basename(__FILE__)));
-  }
+ 	   if (strpos($this->plugin_url,$home)===FALSE) {
+       //make sure we do not have a slash at the start
+       $this->plugin_url = ltrim($this->plugin_url,"/");
+       $this->plugin_url = trailingslashit($home).$this->plugin_url;
+     }
+ 	   if ($this->debug) {$this->trace_log("pluginurl: ".$this->plugin_url);}
+   }
 
 
   /**
@@ -1055,9 +1068,10 @@ public function show_notices()
           </p></div>
           <?php
         }
-        if (isset($this->plugin_conflict["WOOCOMMERCE_FORCESSL"]) && $this->plugin_conflict["WOOCOMMERCE_FORCESSL"]) {
+        if (!$this->woocommerce_forcessl_message_shown && (isset($this->plugin_conflict["WOOCOMMERCE_FORCESSL"]) && $this->plugin_conflict["WOOCOMMERCE_FORCESSL"])) {
+          add_action('admin_print_footer_scripts', array($this, 'insert_dismiss_woocommerce_forcessl'));
           ?>
-          <div id="message" class="error fade notice"><p>
+          <div id="message" class="updated is-dismissible fade notice rlrsssl-woocommerce-forcessl"><p>
           <?php _e("Really Simple SSL has detected a superfluous setting.","rlrsssl-really-simple-ssl");?><br>
           <?php _e("The force ssl on checkout pages is not necessary anymore, and could cause unexpected results.","rlrsssl-really-simple-ssl");?><br>
           <a href="admin.php?page=wc-settings&tab=checkout"><?php _e("Show me this setting","rlrsssl-really-simple-ssl");?></a>
@@ -1090,7 +1104,34 @@ public function show_notices()
       }
     }
 }
+/**
+ * Insert some ajax script to dismiss the woocommerce force ssl message
+ *
+ * @since  2.0
+ *
+ * @access public
+ *
+ */
 
+public function insert_dismiss_woocommerce_forcessl() {
+$ajax_nonce = wp_create_nonce( "rlrsssl-really-simple-ssl" );
+?>
+<script type='text/javascript'>
+  jQuery(document).ready(function($) {
+    $(".rlrsssl-woocommerce-forcessl.notice.is-dismissible").on("click", ".notice-dismiss", function(event){
+          var data = {
+            'action': 'dismiss_woocommerce_forcessl_message',
+            'security': '<?php echo $ajax_nonce; ?>'
+          };
+
+          $.post(ajaxurl, data, function(response) {
+
+          });
+      });
+  });
+</script>
+<?php
+}
   /**
    * Insert some ajax script to dismis the ssl success message, and stop nagging about it
    *
@@ -1146,6 +1187,23 @@ public function insert_dismiss_fail() {
     });
   </script>
   <?php
+}
+
+  /**
+   * Process the ajax dismissal of the success message.
+   *
+   * @since  2.0
+   *
+   * @access public
+   *
+   */
+
+  public function dismiss_woocommerce_forcessl_message_callback() {
+  global $wpdb; // this is how you get access to the database
+  check_ajax_referer( 'rlrsssl-really-simple-ssl', 'security' );
+  $this->woocommerce_forcessl_message_shown = TRUE;
+  $this->save_options();
+  wp_die(); // this is required to terminate immediately and return a proper response
 }
 
   /**
@@ -1574,14 +1632,15 @@ public function section_text() {
 public function options_validate($input) {
   //fill array with current values, so we don't lose any
   $newinput = array();
-  $newinput['site_has_ssl']                     = $this->site_has_ssl;
-  $newinput['ssl_success_message_shown']        = $this->ssl_success_message_shown;
-  $newinput['ssl_fail_message_shown']           = $this->ssl_fail_message_shown;
-  $newinput['plugin_db_version']                = $this->plugin_db_version;
-  $newinput['wpconfig_issue']                   = $this->wpconfig_issue;
-  $newinput['wpconfig_loadbalancer_fix_failed'] = $this->wpconfig_loadbalancer_fix_failed;
-  $newinput['set_rewriterule_per_site']         = $this->set_rewriterule_per_site;
-  $newinput['debug_log']                        = $this->debug_log;
+  $newinput['site_has_ssl']                       = $this->site_has_ssl;
+  $newinput['ssl_success_message_shown']          = $this->ssl_success_message_shown;
+  $newinput['woocommerce_forcessl_message_shown'] = $this->woocommerce_forcessl_message_shown;
+  $newinput['ssl_fail_message_shown']             = $this->ssl_fail_message_shown;
+  $newinput['plugin_db_version']                  = $this->plugin_db_version;
+  $newinput['wpconfig_issue']                     = $this->wpconfig_issue;
+  $newinput['wpconfig_loadbalancer_fix_failed']   = $this->wpconfig_loadbalancer_fix_failed;
+  $newinput['set_rewriterule_per_site']           = $this->set_rewriterule_per_site;
+  $newinput['debug_log']                          = $this->debug_log;
 
   if (!empty($input['hsts']) && $input['hsts']=='1') {
     $newinput['hsts'] = TRUE;

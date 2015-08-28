@@ -96,6 +96,7 @@ public function scan_callback() {
     $search_strings = sprintf(__('The scan searched for the following insecure links: %s','rlrsssl-really-simple-ssl'),$search_strings);
 
     $list_html  = "<tr><td colspan='2'><h2>".__('List of detected items with mixed content','rlrsssl-really-simple-ssl')."</h2></td></tr>";
+    $list_html .= "<tr><td colspan='2'>".__('Because really simple ssl includes a mixed content fixer you do not have to worry about this list, but if you want to disable the mixed content fixer, you can find a list of possible issues here.','rlrsssl-really-simple-ssl')."</td></tr>";
     $list_html .= "<tr><td></td><td><p>".$search_strings."</p></td></tr>";
     $list_html .= "<tr><td></td><td id='scan-results'>";
     $list_html .= "<table class='wp-list-table widefat fixed striped pages'>";
