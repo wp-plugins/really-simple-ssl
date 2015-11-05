@@ -1,0 +1,369 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Really Simple SSL v2.2.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2015-10-08 20:41:13+0000\n"
+"Last-Translator: rogier <rogierlankhorst@gmail.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n>1;\n"
+"X-Generator: CSL v1.x\n"
+"X-Poedit-Language: French\n"
+"X-Poedit-Country: FRANCE\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: __;_e;__ngettext:1,2;_n:1,2;__ngettext_noop:1,2;_n_noop:1,2;_c,_nc:4c,1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;_nx_noop:4c,1,2;\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-Bookmarks: \n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Textdomain-Support: yes"
+
+#: class-admin.php:1242
+#@ rlrsssl-really-simple-ssl
+msgid "No SSL was detected. If you are just waiting for your ssl certificate to kick in you can dismiss this warning."
+msgstr ""
+
+#: class-admin.php:1245
+#@ rlrsssl-really-simple-ssl
+msgid "I'm sure I have an active SSL certificate, force it!"
+msgstr ""
+
+#: class-admin.php:1247
+#@ rlrsssl-really-simple-ssl
+msgid "Scan SSL setup again"
+msgstr ""
+
+#: class-admin.php:1256
+#@ rlrsssl-really-simple-ssl
+msgid "SSl was detected and successfully activated!"
+msgstr ""
+
+#: class-admin.php:1268
+#: class-admin.php:1278
+#@ rlrsssl-really-simple-ssl
+msgid "Really Simple SSL has a conflict with another plugin."
+msgstr ""
+
+#: class-admin.php:1269
+#@ rlrsssl-really-simple-ssl
+msgid "The force rewrite titles option in Yoast SEO prevents Really Simple SSL plugin from fixing mixed content."
+msgstr ""
+
+#: class-admin.php:1270
+#: class-admin.php:1280
+#@ rlrsssl-really-simple-ssl
+msgid "Show me this setting"
+msgstr ""
+
+#: class-admin.php:1279
+#@ rlrsssl-really-simple-ssl
+msgid "The force http after leaving checkout in Woocommerce will create a redirect loop."
+msgstr ""
+
+#: class-admin.php:1290
+#@ rlrsssl-really-simple-ssl
+msgid "We detected a definition of siteurl or homeurl in your wp-config.php, but the file is not writable. Because of this, we cannot set the siteurl to https."
+msgstr ""
+
+#: class-admin.php:1298
+#@ rlrsssl-really-simple-ssl
+msgid "Because your site is behind a loadbalancer and is_ssl() returns false, you should add the following line of code to your wp-config.php. Your wp-config.php could not be written automatically."
+msgstr ""
+
+#: class-admin.php:1314
+#@ rlrsssl-really-simple-ssl
+msgid "Because your server does not pass the $_SERVER[\"HTTPS\"] variable, Wordpress cannot function on SSL. You should add the following line of code to your wp-config.php. Your wp-config.php could not be written automatically."
+msgstr ""
+
+#: class-admin.php:1317
+#@ rlrsssl-really-simple-ssl
+msgid "The wp-config.php was not edited because you are activating this plugin per site on a multisite configuration. The code below will force all your sites on SSL."
+msgstr ""
+
+#: class-admin.php:1456
+#@ rlrsssl-really-simple-ssl
+msgid "SSL settings"
+msgstr ""
+
+#: class-admin.php:1457
+#@ rlrsssl-really-simple-ssl
+msgid "SSL"
+msgstr ""
+
+#: class-admin.php:1481
+#: class-admin.php:1558
+#@ rlrsssl-really-simple-ssl
+msgid "Detected setup"
+msgstr ""
+
+#: class-admin.php:1482
+#@ rlrsssl-really-simple-ssl
+msgid "In the detected setup section you can see what we detected for your site.<br><br><b>SSL detection:</b> if it is possible to open a page on your site with https, it is assumed you have a valid ssl certificate. No guarantees can be given.<br><br><B>SSL redirect in .htaccess:</b> (Only show when ssl is detected) If possible, the redirect will take place in the .htaccess file. If this file is not available or not writable, javascript is used to enforce ssl."
+msgstr ""
+
+#: class-admin.php:1487
+#@ rlrsssl-really-simple-ssl
+msgid "Mixed content fixer"
+msgstr ""
+
+#: class-admin.php:1488
+#@ rlrsssl-really-simple-ssl
+msgid "In most sites, a lot of links are saved into the content, pluginoptions or even worse, in the theme. When you switch to ssl , these are still http, instead of https. To ensure a smooth transition, this plugin auto replaces all these links. If you see in the scan results that you have fixed most of these links, you can try to run your site without this replace script, which will give you a small performance advantage. If you do not have a lot of reported insecure links, you can try this. If you encounter mixed content warnings, just switch it back on. <br><br><b>How to check for mixed content?</b><br>Go to the the front end of your website, and click on the lock in your browser's address bar. When you have mixed content, this lock is not closed, or has a red cross over it."
+msgstr ""
+
+#: class-admin.php:1493
+#@ rlrsssl-really-simple-ssl
+msgid "HTTP Strict Transport Security (HSTS)"
+msgstr ""
+
+#: class-admin.php:1494
+#@ rlrsssl-really-simple-ssl
+msgid "Using this option will prevent users from visiting your website over http for one year, so use this option with caution! HTTP Strict Transport Security (HSTS) is an opt-in security enhancement that is specified by a web application through the use of a special response header. Once a supported browser receives this header that browser will prevent any communications from being sent over HTTP to the specified domain and will instead send all communications over HTTPS. It also prevents HTTPS click through prompts on browsers. "
+msgstr ""
+
+#: class-admin.php:1499
+#@ rlrsssl-really-simple-ssl
+msgid "How to get an SSL certificate"
+msgstr ""
+
+#: class-admin.php:1500
+#@ rlrsssl-really-simple-ssl
+msgid "To secure your site with ssl, you need an SSL certificate. How you can get a certificate depends on your hosting provider, but can often be requested on the control panel of your website. If you are not sure what to do, you can contact your hosting provider."
+msgstr ""
+
+#: class-admin.php:1505
+#: class-admin.php:1773
+#@ rlrsssl-really-simple-ssl
+msgid "Force SSL without detection"
+msgstr ""
+
+#: class-admin.php:1506
+#@ rlrsssl-really-simple-ssl
+msgid "This plugin tries to open a page within the plugin directory over https. If that fails, it is assumed that ssl is not availble. But as this may not cover all eventualities, it is possible to force the site over ssl anyway.<br><br> If you force your site over ssl without a valid ssl certificate, your site may break. In that case, remove the 'really simple ssl' rules from your .htaccess file (if present), and remove or rename the really simple ssl plugin."
+msgstr ""
+
+#: class-admin.php:1520
+#@ rlrsssl-really-simple-ssl
+msgid "Configuration"
+msgstr ""
+
+#: class-admin.php:1520
+#: class-admin.php:1761
+#: class-admin.php:1943
+#@ rlrsssl-really-simple-ssl
+msgid "Settings"
+msgstr ""
+
+#: class-admin.php:1520
+#@ rlrsssl-really-simple-ssl
+msgid "Detected mixed content"
+msgstr ""
+
+#: class-admin.php:1520
+#: class-admin.php:1776
+#@ rlrsssl-really-simple-ssl
+msgid "Debug"
+msgstr ""
+
+#: class-admin.php:1565
+#@ rlrsssl-really-simple-ssl
+msgid "No SSL detected."
+msgstr ""
+
+#: class-admin.php:1567
+#@ rlrsssl-really-simple-ssl
+msgid "No SSL detected, but SSL is forced."
+msgstr ""
+
+#: class-admin.php:1571
+#@ rlrsssl-really-simple-ssl
+msgid "An SSL certificate was detected on your site. "
+msgstr ""
+
+#: class-admin.php:1584
+#@ rlrsssl-really-simple-ssl
+msgid "https redirect set in .htaccess"
+msgstr ""
+
+#: class-admin.php:1586
+#@ rlrsssl-really-simple-ssl
+msgid "Editing of .htaccess is blocked in Really Simple ssl settings, so you're in control of the .htaccess file."
+msgstr ""
+
+#: class-admin.php:1588
+#@ rlrsssl-really-simple-ssl
+msgid "Https redirect was set in javascript because the htaccess redirect rule could not be verified. Set manually if you want to redirect in .htaccess."
+msgstr ""
+
+#: class-admin.php:1596
+#@ rlrsssl-really-simple-ssl
+msgid "Try to add these rules at the bottom of your .htaccess. If it doesn't work, just remove them again."
+msgstr ""
+
+#: class-admin.php:1615
+#@ rlrsssl-really-simple-ssl
+msgid "HTTP Strict Transport Security was set in the .htaccess"
+msgstr ""
+
+#: class-admin.php:1617
+#@ rlrsssl-really-simple-ssl
+msgid "HTTP Strict Transport Security was not set in your .htaccess. Do this only if your setup is fully working, and only when you do not plan to revert to http."
+msgstr ""
+
+#: class-admin.php:1620
+#: class-scan.php:81
+#: class-scan.php:90
+#@ rlrsssl-really-simple-ssl
+msgid "Manage settings"
+msgstr ""
+
+#: class-admin.php:1640
+#@ rlrsssl-really-simple-ssl
+msgid "Save"
+msgstr ""
+
+#: class-admin.php:1666
+#@ rlrsssl-really-simple-ssl
+msgid "Log for debugging purposes"
+msgstr ""
+
+#: class-admin.php:1667
+#@ rlrsssl-really-simple-ssl
+msgid "Send me a copy of these lines if you have any issues. The log will be erased when debug is set to false"
+msgstr ""
+
+#: class-admin.php:1675
+#@ rlrsssl-really-simple-ssl
+msgid "To view results here, enable the debug option in the settings tab."
+msgstr ""
+
+#: class-admin.php:1762
+#@ rlrsssl-really-simple-ssl
+msgid "Stop editing the .htaccess file"
+msgstr ""
+
+#: class-admin.php:1764
+#@ rlrsssl-really-simple-ssl
+msgid "Auto replace mixed content"
+msgstr ""
+
+#: class-admin.php:1768
+#@ rlrsssl-really-simple-ssl
+msgid "Turn HTTP Strict Transport Security on"
+msgstr ""
+
+#: class-admin.php:1793
+#@ rlrsssl-really-simple-ssl
+msgid "By unchecking the 'auto replace mixed content' checkbox you can test if your site can run without this extra functionality. Uncheck, empty your cache when you use one, and go to the front end of your site. You should then check if you have mixed content errors, by clicking on the lock icon in the addres bar."
+msgstr ""
+
+#: class-admin.php:1795
+#@ rlrsssl-really-simple-ssl
+msgid "The force ssl without detection option can be used when the ssl was not detected, but you are sure you have ssl."
+msgstr ""
+
+#: class-admin.php:1889
+#@ rlrsssl-really-simple-ssl
+msgid "Are you sure? Your visitors will keep going to a https site for a year after you turn this off."
+msgstr ""
+
+#: class-admin.php:1903
+#@ rlrsssl-really-simple-ssl
+msgid "Are you sure you have an SSL certifcate? Forcing ssl on a non-ssl site can break your site."
+msgstr ""
+
+#: class-scan.php:37
+#: class-scan.php:38
+#@ rlrsssl-really-simple-ssl
+msgid "Scanning..."
+msgstr ""
+
+#: class-scan.php:78
+#@ rlrsssl-really-simple-ssl
+msgid "Mixed content detected "
+msgstr ""
+
+#: class-scan.php:79
+#@ rlrsssl-really-simple-ssl
+msgid "but that's ok, because the mixed content fixer is active."
+msgstr ""
+
+#: class-scan.php:79
+#@ rlrsssl-really-simple-ssl
+msgid "but the mixed content fix is not active."
+msgstr ""
+
+#: class-scan.php:84
+#@ rlrsssl-really-simple-ssl
+msgid "In the tab \"detected mixed content\" you can find a list of items with mixed content."
+msgstr ""
+
+#: class-scan.php:89
+#@ rlrsssl-really-simple-ssl
+msgid "No mixed content was detected. You could try to run your site without using the auto replace of insecure links, but check carefully. "
+msgstr ""
+
+#: class-scan.php:98
+#, php-format
+#@ rlrsssl-really-simple-ssl
+msgid "The scan searched for the following insecure links: %s"
+msgstr ""
+
+#: class-scan.php:100
+#@ rlrsssl-really-simple-ssl
+msgid "List of detected items with mixed content"
+msgstr ""
+
+#: class-scan.php:101
+#@ rlrsssl-really-simple-ssl
+msgid "Because really simple ssl includes a mixed content fixer you do not have to worry about this list, but if you want to disable the mixed content fixer, you can find a list of possible issues here."
+msgstr ""
+
+#: class-scan.php:108
+#@ rlrsssl-really-simple-ssl
+msgid "edit"
+msgstr ""
+
+#: class-scan.php:126
+#@ rlrsssl-really-simple-ssl
+msgid "Scan again"
+msgstr ""
+
+#. translators: plugin header field 'Name'
+#: rlrsssl-really-simple-ssl.php:0
+#@ rlrsssl-really-simple-ssl
+msgid "Really Simple SSL"
+msgstr ""
+
+#. translators: plugin header field 'PluginURI'
+#: rlrsssl-really-simple-ssl.php:0
+#@ rlrsssl-really-simple-ssl
+msgid "http://www.rogierlankhorst.com/really-simple-ssl"
+msgstr ""
+
+#. translators: plugin header field 'Description'
+#: rlrsssl-really-simple-ssl.php:0
+#@ rlrsssl-really-simple-ssl
+msgid "Lightweight plugin without any setup to make your site ssl proof"
+msgstr ""
+
+#. translators: plugin header field 'Author'
+#: rlrsssl-really-simple-ssl.php:0
+#@ rlrsssl-really-simple-ssl
+msgid "Rogier Lankhorst"
+msgstr ""
+
+#. translators: plugin header field 'AuthorURI'
+#: rlrsssl-really-simple-ssl.php:0
+#@ rlrsssl-really-simple-ssl
+msgid "http://www.rogierlankhorst.com"
+msgstr ""
+
+#. translators: plugin header field 'Version'
+#: rlrsssl-really-simple-ssl.php:0
+#@ rlrsssl-really-simple-ssl
+msgid "2.2.0"
+msgstr ""
+
