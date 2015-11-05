@@ -60,6 +60,8 @@ public function insert_scan() {
 
 public function scan_callback() {
   global $wpdb;
+  $result_html = "";
+  $list_html = "";
   check_ajax_referer( 'rlrsssl-really-simple-ssl', 'security' );
   $files = new rlrsssl_files;
   $files->scan($this->search_array);
@@ -71,7 +73,7 @@ public function scan_callback() {
   }
 
   if ($this->mixed_content_detected) {
-    $result_html  = "<tr><td>";
+    $result_html .= "<tr><td>";
     $result_html .= $this->autoreplace_insecure_links ? $this->img_success :$this->img_warning;
     $result_html .= "</td><td>".__('Mixed content detected ','rlrsssl-really-simple-ssl');
     $result_html .= $this->autoreplace_insecure_links ? __("but that's ok, because the mixed content fixer is active.","rlrsssl-really-simple-ssl") : __("but the mixed content fix is not active.","rlrsssl-really-simple-ssl");
@@ -95,7 +97,7 @@ public function scan_callback() {
     }
     $search_strings = sprintf(__('The scan searched for the following insecure links: %s','rlrsssl-really-simple-ssl'),$search_strings);
 
-    $list_html  = "<tr><td colspan='2'><h2>".__('List of detected items with mixed content','rlrsssl-really-simple-ssl')."</h2></td></tr>";
+    $list_html .= "<tr><td colspan='2'><h2>".__('List of detected items with mixed content','rlrsssl-really-simple-ssl')."</h2></td></tr>";
     $list_html .= "<tr><td colspan='2'>".__('Because really simple ssl includes a mixed content fixer you do not have to worry about this list, but if you want to disable the mixed content fixer, you can find a list of possible issues here.','rlrsssl-really-simple-ssl')."</td></tr>";
     $list_html .= "<tr><td></td><td><p>".$search_strings."</p></td></tr>";
     $list_html .= "<tr><td></td><td id='scan-results'>";

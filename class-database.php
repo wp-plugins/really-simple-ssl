@@ -29,9 +29,6 @@ class rlrsssl_database {
         }
       }
       $where.=") ";
-
-      //extend to all post types
-      $where = str_replace("AND wp_posts.post_type = 'post' AND", "AND", $where);
       return $where;
   }
 
@@ -53,9 +50,11 @@ class rlrsssl_database {
       public function scan($search_array) {
         $this->search_array = $search_array;
 
-        //scan posts
         add_filter('posts_where', array($this,'build_query'));
-        $args = array('suppress_filters' => false );
+        $args = array(
+            'post_type'   => get_post_types( '','names' ),
+            'suppress_filters' => false
+        );
         $the_query = new WP_Query($args);
         //limit results
         $count = 0;
