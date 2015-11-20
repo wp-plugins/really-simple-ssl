@@ -82,8 +82,8 @@ Add to your wp-config.php:
 define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS', TRUE);
 * If parts of your site aren't loading, you might have external resources that are not able to load on ssl. Check the Google console.
 * If your browser still gives mixed content warnings:
-1) Clear the cache of your browser and of your Wordpress site, if you use a caching plugin.
-2) Check the Google console for errors. If you have non https links to your own site, or "src='http://" in the source of your website,
+1. Clear the cache of your browser and of your Wordpress site, if you use a caching plugin.
+2. Check the Google console for errors. If you have non https links to your own site, or "src='http://" in the source of your website,
 the insecure content fixer is probably blocked by another plugin. You can check this by deactivating your plugins one by one, and see if really simple ssl starts working.
 Let me know if you find a plugin conflict, so I can put it in my conflict list.
 
@@ -108,8 +108,8 @@ Not really. The plugin also adds some javascript to redirect any non https pages
 Furthermore, you can enable the HSTS setting to improve security.
 
 Common causes:
-1. The .htaccess is not writable, or not available. To fix it, make writable, or enter the rewriterules manually.
-2. Testing of the .htaccess rewrite rules failed, due to missing server variables or not being able to reach the testing page. These issues are caused by your server configuration, contact your hosting provider.
+1. The .htaccess is not writable, or not available. To fix it, make writable, or enter the rewriterules manually
+2. Testing of the .htaccess rewrite rules failed, due to missing server variables or not being able to reach the testing page. These issues are caused by your server configuration, contact your hosting provider
 
 = Is it possible to exclude certain urls from the ssl redirect? =
 That is not possible. This plugin simply forces your complete site over https, which keeps it lightweight.
