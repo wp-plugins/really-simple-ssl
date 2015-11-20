@@ -64,6 +64,7 @@ If you have issues, please contact me. Maybe we can fix your configuration as we
 = Uninstalling =
 In some cases it happens that you cannot access your admin anymore, which would prevent your from uninstalling. The
 plugin is shipped with a simple method to uninstall:
+
 1. In the wp-content/plugins/really-simple-ssl folder, rename the file "force-deactivate.txt" to "force-deactivate.php".
 2. In your browser, go to www.yourdomain.com/wp-content/plugins/really-simple-ssl/force-deactivate.php
 
@@ -82,6 +83,7 @@ Add to your wp-config.php:
 define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS', TRUE);
 * If parts of your site aren't loading, you might have external resources that are not able to load on ssl. Check the Google console.
 * If your browser still gives mixed content warnings:
+
 1. Clear the cache of your browser and of your Wordpress site, if you use a caching plugin.
 2. Check the Google console for errors. If you have non https links to your own site, or "src='http://" in the source of your website,
 the insecure content fixer is probably blocked by another plugin. You can check this by deactivating your plugins one by one, and see if really simple ssl starts working.
@@ -89,6 +91,7 @@ Let me know if you find a plugin conflict, so I can put it in my conflict list.
 
 = How to uninstall when website/backend is not accessible =
 Though this plugin is extensively tested, this can still happen. However, this is very easy to fix (you'll need ftp access):
+
 1. In the wp-content/plugins/really-simple-ssl folder, rename the file "force-deactivate.txt" to "force-deactivate.php".
 2. In your browser, go to www.yourdomain.com/wp-content/plugins/really-simple-ssl/force-deactivate.php
 
