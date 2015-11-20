@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=ZEQHX
 Tags: secure website, website security, ssl, https, tls, security, secure socket layers, hsts
 Requires at least: 4.2
 License: GPL2
-Tested up to: 4.3
+Tested up to: 4.4
 Stable tag: 2.1.18
 
 No setup required! You only need an SSL certificate, and this plugin will do the rest.
@@ -21,16 +21,16 @@ If ssl is detected it will configure your site to support ssl.
 * The plugin handles most issues that Wordpress has with ssl, like the much discussed loadbalancer issue, or when there are no server variables set at all.
 * All incoming requests are redirected to https. If possible with .htaccess, or else with javascript.
 * The site url and home url are changed to https.
-* Your insecure content is fixed by replacing all included resources with https.
+* Your insecure content is fixed by replacing all included resources with https. Dynamically, so no database changes are made (except for the siteurl and homeurl).
 
 = Feedback is welcome! =
-Though the plugin is extensively tested and currently successfully active on over 4000 websites, it is impossible to test or even conceive of every different server configuration. So issues are always possible.
-Rather than being angry about it, I would appreciate it if contact me with the issue, so I can help you fix it and improve the plugin at the same time.
-I need the following information:
+Though the plugin is extensively tested and currently successfully active on over 5000 websites, it is impossible to test or even conceive of every different server configuration. So it might be possible you have issues with a non-standard server configuration.
+Rather than ranting about it, I would appreciate it if you contact me with the issue, so I can help you fix it and improve the plugin at the same time.
+I will need the following information:
 
-* Activate debug and copy the results,
-* Domain,
-* Plugin list,
+* Debug report: activate debug and copy the results
+* Domain
+* Plugin list
 
 [contact](http://www.really-simple-ssl.com/contact/) me if you have any questions or suggestions.
 
@@ -41,10 +41,12 @@ If you like to betatest, that would be great! Please enter my betatest mailingli
 I'd like to include more translations, if you'd like to help out, please contact me.
 
 = Translation credits =
+Thanks for the French translation to [Cédric](http://www.blig.fr/)
 Thanks for the Russian translation to [xsacha](https://news36.org/)
 
-= Next version =
-In the next version, a check for possible external resources that are not available over ssl will be added.
+= Under development, expected early 2016 =
+* A check for possible external resources that are not available over ssl.
+* Option to disable javascript redirect in settings.
 
 == Installation ==
 To install this plugin:
@@ -55,9 +57,13 @@ To install this plugin:
 4. Go to “plugins” in your wordpress admin, then click activate.
 5. You will get redirected to the login screen. If not, go to the login screen and log on.
 
+= Testing =
+This plugin is tested in standard apache environments, but is built with several fallbacks for situations where non-standard configurations are used.
+If you have issues, please contact me. Maybe we can fix your configuration as well.
+
 = Uninstalling =
-Normally this would be done in your admin dashboard, but due to the multitude of server configurations it sometimes happens that you cannot access your admin anymore. The
-plugin is shipped with a function to uninstall:
+In some cases it happens that you cannot access your admin anymore, which would prevent your from uninstalling. The
+plugin is shipped with a simple method to uninstall:
 1. In the wp-content/plugins/really-simple-ssl folder, rename the file "force-deactivate.txt" to "force-deactivate.php".
 2. In your browser, go to www.yourdomain.com/wp-content/plugins/really-simple-ssl/force-deactivate.php
 
@@ -67,8 +73,22 @@ For more information: go to the [website](http://www.really-simple-ssl.com/), or
 [contact](http://www.really-simple-ssl.com/contact/) me if you have any questions or suggestions.
 
 == Frequently Asked Questions ==
+= Troubleshooting shortlist =
+You can find the cause of most issues when looking in the Chrome console:
+In Chrome, right click on your webpage, then select "inspect element" to see what links are causing this (you can ignore hyperlinks).
+
+* If you are experiencing redirects on your site, you might want to try disabling the .htaccess:
+Add to your wp-config.php:
+define( 'RLRSSSL_DO_NOT_EDIT_HTACCESS', TRUE);
+* If parts of your site aren't loading, you might have external resources that are not able to load on ssl. Check the Google console.
+* If your browser still gives mixed content warnings:
+1) Clear the cache of your browser and of your Wordpress site, if you use a caching plugin.
+2) Check the Google console for errors. If you have non https links to your own site, or "src='http://" in the source of your website,
+the insecure content fixer is probably blocked by another plugin. You can check this by deactivating your plugins one by one, and see if really simple ssl starts working.
+Let me know if you find a plugin conflict, so I can put it in my conflict list.
+
 = How to uninstall when website/backend is not accessible =
-Though this plugin is extensively tested, this can still happen. However, this is very easy to fix as of the latest update (you'll need ftp access):
+Though this plugin is extensively tested, this can still happen. However, this is very easy to fix (you'll need ftp access):
 1. In the wp-content/plugins/really-simple-ssl folder, rename the file "force-deactivate.txt" to "force-deactivate.php".
 2. In your browser, go to www.yourdomain.com/wp-content/plugins/really-simple-ssl/force-deactivate.php
 
@@ -88,37 +108,30 @@ Not really. The plugin also adds some javascript to redirect any non https pages
 Furthermore, you can enable the HSTS setting to improve security.
 
 Common causes:
-1. The .htaccess is not writable, or not available.
-2. Testing of the .htaccess rewrite rules failed, which is caused by your server configuration.
-
-= Some parts of my site aren't loading =
-Your site possibly includes external resources which cannot load over https. In Chrome, right click, then select "inspect element" on your website to see what links are causing this.
-Resources that cannot be loaded over https cannot be included on a SSL website.
-
-= My browser still gives mixed content warnings =
-* Clear the cache of your wordpress site, if you use a caching plugin.
-* Clear the cache of your browser
-* Your site possibly includes external resources that were not replaced, or resources in css or javascript files.
-In Chrome, right click on your webpage, then select "inspect element" to see what links are causing this (you can ignore hyperlinks).
-* If you look in the source of your website and see links to your own site, or src="http:// links that were not replaced, there might be a plugin conflict blocking the insecure content fixer.
-You can check this by deactivating your plugins one by one, and see if really simple ssl starts working.
-Let me know if you find a plugin conflict, so I can put it in my conflict list.
+1. The .htaccess is not writable, or not available. To fix it, make writable, or enter the rewriterules manually.
+2. Testing of the .htaccess rewrite rules failed, due to missing server variables or not being able to reach the testing page. These issues are caused by your server configuration, contact your hosting provider.
 
 = Is it possible to exclude certain urls from the ssl redirect? =
 That is not possible. This plugin simply forces your complete site over https, which keeps it lightweight.
-It is also my opinion that the internet is moving toward an all ssl internet.
 
 = Is the plugin suitable for wordpress multisite? =
 Yes, the plugin is wpmu ready.
+You can activate ssl per site on subdomain installs, but not on subfolder installs (domain.com/site1).
 
 = Does the plugin do a seo friendly 301 redirect in the .htaccess? =
 Yes, default the plugin redirects permanently with [R=301].
 
-= Does the plugin also redirect all subpages to https? =
-Yes, every request to your domain gets redirected to https.
-
 == Changelog ==
+= 2.2.2 =
+* Added multisite support for the missing https server variable issue
+* Improved curl connection script
+* Added French translation thanks to Cedric
+
+= 2.2.1 =
+* Small bug fixes
+
 = 2.2.0 =
+* Added per site activation for multisite, but excluded this option for subfolder installs.
 * Added script to easily deactivate the plugin when you are locked out of the wordpress admin.
 * Added support for a situation where no server variables are given which can indicate ssl, which can cause Wordpress to generate errors and redirect loops.
 * Removed warning on Woocommerce force ssl after checkout, as only unforce ssl seems to be causing problems
@@ -188,8 +201,10 @@ Yes, every request to your domain gets redirected to https.
 
 = 2.1.2 =
 * Fixed bug where number of options with mixed content was not displayed correctly
+
 = 2.1.1 =
 * limited the number of files, posts and options that can be show at once in the mixed content scan.
+
 = 2.1.0 =
 * Added version control to the .htaccess rules, so the .htaccess gets updated as well.
 * Added detection of loadbalancer and cdn so .htaccess rules can be adapted accordingly. Fixes some redirect loop issues.
@@ -222,9 +237,8 @@ Yes, every request to your domain gets redirected to https.
 * Improved installation instructions
 
 == Upgrade notice ==
-In this upgrade, several rules for .htaccess redirects are changed. I recommend backing up your site, especially your .htaccess!
-Always back up before any upgrade: .htaccess, wp-config.php and the plugin folder. This way you can easily roll back.
-In general I would always recommend a solid backup policy, as that will prevent a lot of stress and pulled out hairs.
+Always back up before any upgrade. Especially .htaccess, wp-config.php and the plugin folder. This way you can easily roll back.
+In general I would always recommend a solid backup policy, as that will prevent a lot of stress, yelling, and hitting yourself.
 
 == Screenshots ==
 1. After activation, your ssl will be detected if present

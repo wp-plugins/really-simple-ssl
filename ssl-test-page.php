@@ -36,5 +36,11 @@
 		echo "<br>#NO KNOWN SSL CONFIGURATION DETECTED#";
 	}
 ?>
+<br><br><br>
+<?php
+  echo "HTTP_HOST: ".$_SERVER["HTTP_HOST"];
+  echo "<br>";
+  echo "REQUEST_URI: ".$_SERVER["REQUEST_URI"];
+?>
 </body>
 </html>

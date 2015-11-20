@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: Really Simple SSL
- * Plugin URI: http://www.rogierlankhorst.com/really-simple-ssl
+ * Plugin URI: https://www.really-simple-ssl.com
  * Description: Lightweight plugin without any setup to make your site ssl proof
- * Version: 2.2.1
+ * Version: 2.2.2
  * Text Domain: rlrsssl-really-simple-ssl
  * Domain Path: /lang
  * Author: Rogier Lankhorst
- * Author URI: http://www.rogierlankhorst.com
+ * Author URI: https://www.rogierlankhorst.com
  * License: GPL2
  */
 

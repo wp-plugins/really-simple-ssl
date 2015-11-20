@@ -4,8 +4,7 @@
 * To deactivate:
 *       1) rename this file to force-deactivate.php
 *       2) Go in your browser to www.yourdomain.com/wp-content/plugins/really-simple-ssl/force-deactivate.php.
-*       3) IMPORTANT!!!! Rename this file back to .txt, or a different name alltogether, or you give anyone
-*          the possibility to disable this plugin.
+*       3) IMPORTANT!!!! Rename this file back to .txt
 */
 
 ?>
